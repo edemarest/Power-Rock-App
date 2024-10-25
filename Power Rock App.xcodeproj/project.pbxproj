@@ -1,0 +1,568 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		226BB0DB2CCC0FE5000207B7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 226BB0BC2CCC0FE4000207B7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 226BB0C32CCC0FE4000207B7;
+			remoteInfo = "Power Rock App";
+		};
+		226BB0E52CCC0FE5000207B7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 226BB0BC2CCC0FE4000207B7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 226BB0C32CCC0FE4000207B7;
+			remoteInfo = "Power Rock App";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		226BB0C42CCC0FE4000207B7 /* Power Rock App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Power Rock App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		226BB0DA2CCC0FE5000207B7 /* Power Rock AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Power Rock AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		226BB0E42CCC0FE5000207B7 /* Power Rock AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Power Rock AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		226BB0EC2CCC0FE5000207B7 /* Exceptions for "Power Rock App" folder in "Power Rock App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 226BB0C32CCC0FE4000207B7 /* Power Rock App */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		226BB0C62CCC0FE4000207B7 /* Power Rock App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				226BB0EC2CCC0FE5000207B7 /* Exceptions for "Power Rock App" folder in "Power Rock App" target */,
+			);
+			path = "Power Rock App";
+			sourceTree = "<group>";
+		};
+		226BB0DD2CCC0FE5000207B7 /* Power Rock AppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Power Rock AppTests";
+			sourceTree = "<group>";
+		};
+		226BB0E72CCC0FE5000207B7 /* Power Rock AppUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Power Rock AppUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		226BB0C12CCC0FE4000207B7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		226BB0D72CCC0FE5000207B7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		226BB0E12CCC0FE5000207B7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		226BB0BB2CCC0FE4000207B7 = {
+			isa = PBXGroup;
+			children = (
+				226BB0C62CCC0FE4000207B7 /* Power Rock App */,
+				226BB0DD2CCC0FE5000207B7 /* Power Rock AppTests */,
+				226BB0E72CCC0FE5000207B7 /* Power Rock AppUITests */,
+				226BB0C52CCC0FE4000207B7 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		226BB0C52CCC0FE4000207B7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				226BB0C42CCC0FE4000207B7 /* Power Rock App.app */,
+				226BB0DA2CCC0FE5000207B7 /* Power Rock AppTests.xctest */,
+				226BB0E42CCC0FE5000207B7 /* Power Rock AppUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		226BB0C32CCC0FE4000207B7 /* Power Rock App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 226BB0ED2CCC0FE5000207B7 /* Build configuration list for PBXNativeTarget "Power Rock App" */;
+			buildPhases = (
+				226BB0C02CCC0FE4000207B7 /* Sources */,
+				226BB0C12CCC0FE4000207B7 /* Frameworks */,
+				226BB0C22CCC0FE4000207B7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				226BB0C62CCC0FE4000207B7 /* Power Rock App */,
+			);
+			name = "Power Rock App";
+			packageProductDependencies = (
+			);
+			productName = "Power Rock App";
+			productReference = 226BB0C42CCC0FE4000207B7 /* Power Rock App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		226BB0D92CCC0FE5000207B7 /* Power Rock AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 226BB0F22CCC0FE5000207B7 /* Build configuration list for PBXNativeTarget "Power Rock AppTests" */;
+			buildPhases = (
+				226BB0D62CCC0FE5000207B7 /* Sources */,
+				226BB0D72CCC0FE5000207B7 /* Frameworks */,
+				226BB0D82CCC0FE5000207B7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				226BB0DC2CCC0FE5000207B7 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				226BB0DD2CCC0FE5000207B7 /* Power Rock AppTests */,
+			);
+			name = "Power Rock AppTests";
+			packageProductDependencies = (
+			);
+			productName = "Power Rock AppTests";
+			productReference = 226BB0DA2CCC0FE5000207B7 /* Power Rock AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		226BB0E32CCC0FE5000207B7 /* Power Rock AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 226BB0F52CCC0FE5000207B7 /* Build configuration list for PBXNativeTarget "Power Rock AppUITests" */;
+			buildPhases = (
+				226BB0E02CCC0FE5000207B7 /* Sources */,
+				226BB0E12CCC0FE5000207B7 /* Frameworks */,
+				226BB0E22CCC0FE5000207B7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				226BB0E62CCC0FE5000207B7 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				226BB0E72CCC0FE5000207B7 /* Power Rock AppUITests */,
+			);
+			name = "Power Rock AppUITests";
+			packageProductDependencies = (
+			);
+			productName = "Power Rock AppUITests";
+			productReference = 226BB0E42CCC0FE5000207B7 /* Power Rock AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		226BB0BC2CCC0FE4000207B7 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					226BB0C32CCC0FE4000207B7 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					226BB0D92CCC0FE5000207B7 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 226BB0C32CCC0FE4000207B7;
+					};
+					226BB0E32CCC0FE5000207B7 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 226BB0C32CCC0FE4000207B7;
+					};
+				};
+			};
+			buildConfigurationList = 226BB0BF2CCC0FE4000207B7 /* Build configuration list for PBXProject "Power Rock App" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 226BB0BB2CCC0FE4000207B7;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 226BB0C52CCC0FE4000207B7 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				226BB0C32CCC0FE4000207B7 /* Power Rock App */,
+				226BB0D92CCC0FE5000207B7 /* Power Rock AppTests */,
+				226BB0E32CCC0FE5000207B7 /* Power Rock AppUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		226BB0C22CCC0FE4000207B7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		226BB0D82CCC0FE5000207B7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		226BB0E22CCC0FE5000207B7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		226BB0C02CCC0FE4000207B7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		226BB0D62CCC0FE5000207B7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		226BB0E02CCC0FE5000207B7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		226BB0DC2CCC0FE5000207B7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 226BB0C32CCC0FE4000207B7 /* Power Rock App */;
+			targetProxy = 226BB0DB2CCC0FE5000207B7 /* PBXContainerItemProxy */;
+		};
+		226BB0E62CCC0FE5000207B7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 226BB0C32CCC0FE4000207B7 /* Power Rock App */;
+			targetProxy = 226BB0E52CCC0FE5000207B7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		226BB0EE2CCC0FE5000207B7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Power Rock App/Info.plist";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "PowerRockTeam.Power-Rock-App";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		226BB0EF2CCC0FE5000207B7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Power Rock App/Info.plist";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "PowerRockTeam.Power-Rock-App";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		226BB0F02CCC0FE5000207B7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		226BB0F12CCC0FE5000207B7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		226BB0F32CCC0FE5000207B7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "PowerRockTeam.Power-Rock-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Power Rock App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Power Rock App";
+			};
+			name = Debug;
+		};
+		226BB0F42CCC0FE5000207B7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "PowerRockTeam.Power-Rock-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Power Rock App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Power Rock App";
+			};
+			name = Release;
+		};
+		226BB0F62CCC0FE5000207B7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "PowerRockTeam.Power-Rock-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "Power Rock App";
+			};
+			name = Debug;
+		};
+		226BB0F72CCC0FE5000207B7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "PowerRockTeam.Power-Rock-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "Power Rock App";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		226BB0BF2CCC0FE4000207B7 /* Build configuration list for PBXProject "Power Rock App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				226BB0F02CCC0FE5000207B7 /* Debug */,
+				226BB0F12CCC0FE5000207B7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		226BB0ED2CCC0FE5000207B7 /* Build configuration list for PBXNativeTarget "Power Rock App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				226BB0EE2CCC0FE5000207B7 /* Debug */,
+				226BB0EF2CCC0FE5000207B7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		226BB0F22CCC0FE5000207B7 /* Build configuration list for PBXNativeTarget "Power Rock AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				226BB0F32CCC0FE5000207B7 /* Debug */,
+				226BB0F42CCC0FE5000207B7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		226BB0F52CCC0FE5000207B7 /* Build configuration list for PBXNativeTarget "Power Rock AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				226BB0F62CCC0FE5000207B7 /* Debug */,
+				226BB0F72CCC0FE5000207B7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 226BB0BC2CCC0FE4000207B7 /* Project object */;
+}
