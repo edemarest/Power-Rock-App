@@ -1,8 +1,8 @@
 import UIKit
 
 protocol FanRegisterViewDelegate: AnyObject {
-    func didTapRegisterButton(firstName: String, email: String, password: String, profileImage: UIImage?)
-    func didTapBackButton()
+    func didTapFanBackButton()
+    func didTapFanRegisterButton(firstName: String, email: String, password: String, profileImage: UIImage?)
 }
 
 class FanRegisterView: UIView {
@@ -140,7 +140,7 @@ class FanRegisterView: UIView {
     }
 
     @objc private func didTapBack() {
-        delegate?.didTapBackButton()
+        delegate?.didTapFanBackButton()
     }
 
     @objc private func didTapRegister() {
@@ -148,6 +148,6 @@ class FanRegisterView: UIView {
         let email = emailTextField.text ?? ""
         let password = passwordTextField.text ?? ""
         let profileImage = profileImageView.image
-        delegate?.didTapRegisterButton(firstName: firstName, email: email, password: password, profileImage: profileImage)
+        delegate?.didTapFanRegisterButton(firstName: firstName, email: email, password: password, profileImage: profileImage)
     }
 }

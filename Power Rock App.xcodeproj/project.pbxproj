@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		220A905B2CDC027A00A42F50 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 220A905A2CDC027A00A42F50 /* FirebaseAnalytics */; };
+		220A905D2CDC027A00A42F50 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */ = {isa = PBXBuildFile; productRef = 220A905C2CDC027A00A42F50 /* FirebaseAnalyticsOnDeviceConversion */; };
+		220A905F2CDC027A00A42F50 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 220A905E2CDC027A00A42F50 /* FirebaseAuth */; };
+		220A90612CDC027A00A42F50 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 220A90602CDC027A00A42F50 /* FirebaseCore */; };
+		220A90632CDC027A00A42F50 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 220A90622CDC027A00A42F50 /* FirebaseDatabase */; };
+		220A90652CDC027A00A42F50 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 220A90642CDC027A00A42F50 /* FirebaseFirestore */; };
+		220A90672CDC027A00A42F50 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 220A90662CDC027A00A42F50 /* FirebaseStorage */; };
 		22CFDE562CD2C43900650122 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 22CFDE552CD2C43900650122 /* Alamofire */; };
 /* End PBXBuildFile section */
 
@@ -69,7 +76,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				220A90632CDC027A00A42F50 /* FirebaseDatabase in Frameworks */,
+				220A905B2CDC027A00A42F50 /* FirebaseAnalytics in Frameworks */,
+				220A90612CDC027A00A42F50 /* FirebaseCore in Frameworks */,
+				220A905D2CDC027A00A42F50 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */,
 				22CFDE562CD2C43900650122 /* Alamofire in Frameworks */,
+				220A90672CDC027A00A42F50 /* FirebaseStorage in Frameworks */,
+				220A905F2CDC027A00A42F50 /* FirebaseAuth in Frameworks */,
+				220A90652CDC027A00A42F50 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -131,6 +145,13 @@
 			name = "Power Rock App";
 			packageProductDependencies = (
 				22CFDE552CD2C43900650122 /* Alamofire */,
+				220A905A2CDC027A00A42F50 /* FirebaseAnalytics */,
+				220A905C2CDC027A00A42F50 /* FirebaseAnalyticsOnDeviceConversion */,
+				220A905E2CDC027A00A42F50 /* FirebaseAuth */,
+				220A90602CDC027A00A42F50 /* FirebaseCore */,
+				220A90622CDC027A00A42F50 /* FirebaseDatabase */,
+				220A90642CDC027A00A42F50 /* FirebaseFirestore */,
+				220A90662CDC027A00A42F50 /* FirebaseStorage */,
 			);
 			productName = "Power Rock App";
 			productReference = 226BB0C42CCC0FE4000207B7 /* Power Rock App.app */;
@@ -216,6 +237,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				22CFDE542CD2C43900650122 /* XCRemoteSwiftPackageReference "Alamofire" */,
+				220A90592CDC027A00A42F50 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 226BB0C52CCC0FE4000207B7 /* Products */;
@@ -574,6 +596,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		220A90592CDC027A00A42F50 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.4.0;
+			};
+		};
 		22CFDE542CD2C43900650122 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
@@ -585,6 +615,41 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		220A905A2CDC027A00A42F50 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 220A90592CDC027A00A42F50 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		220A905C2CDC027A00A42F50 /* FirebaseAnalyticsOnDeviceConversion */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 220A90592CDC027A00A42F50 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsOnDeviceConversion;
+		};
+		220A905E2CDC027A00A42F50 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 220A90592CDC027A00A42F50 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		220A90602CDC027A00A42F50 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 220A90592CDC027A00A42F50 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		220A90622CDC027A00A42F50 /* FirebaseDatabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 220A90592CDC027A00A42F50 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseDatabase;
+		};
+		220A90642CDC027A00A42F50 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 220A90592CDC027A00A42F50 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		220A90662CDC027A00A42F50 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 220A90592CDC027A00A42F50 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
 		22CFDE552CD2C43900650122 /* Alamofire */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 22CFDE542CD2C43900650122 /* XCRemoteSwiftPackageReference "Alamofire" */;
