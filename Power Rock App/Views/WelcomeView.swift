@@ -3,7 +3,7 @@ import UIKit
 protocol WelcomeViewDelegate: AnyObject {
     func didTapFanButton()
     func didTapStarButton()
-    func didTapLoginButton()
+    func didTapLoginButtonFromWelcome()
 }
 
 class WelcomeView: UIView {
@@ -134,7 +134,7 @@ class WelcomeView: UIView {
     private func setupActions() {
         fanButton.addTarget(self, action: #selector(didTapFan), for: .touchUpInside)
         starButton.addTarget(self, action: #selector(didTapStar), for: .touchUpInside)
-        loginButton.addTarget(self, action: #selector(didTapLogin), for: .touchUpInside)
+        loginButton.addTarget(self, action: #selector(didTapLoginButtonFromWelcome), for: .touchUpInside)
     }
 
     @objc private func didTapFan() {
@@ -145,7 +145,7 @@ class WelcomeView: UIView {
         delegate?.didTapStarButton()
     }
 
-    @objc private func didTapLogin() {
-        delegate?.didTapLoginButton()
+    @objc private func didTapLoginButtonFromWelcome() {
+        delegate?.didTapLoginButtonFromWelcome()
     }
 }

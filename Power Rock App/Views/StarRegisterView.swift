@@ -3,7 +3,7 @@ import UIKit
 protocol StarRegisterViewDelegate: AnyObject {
     func didTapStarBackButton()
     func didTapStarRegisterButton(bandName: String, email: String, password: String, genres: [String], members: [String], bandLogo: UIImage?)
-    func didTapUploadImage()
+    func didTapUploadBandLogo()
 }
 
 class StarRegisterView: UIView {
@@ -147,7 +147,7 @@ class StarRegisterView: UIView {
         passwordTextField.placeholder = "Enter password"
         passwordTextField.borderStyle = .roundedRect
         passwordTextField.isSecureTextEntry = true // Mask password input
-        passwordTextField.textContentType = .none // Disable strong password suggestion
+        passwordTextField.textContentType = .none
         addSubview(passwordTextField)
 
 
@@ -280,7 +280,7 @@ class StarRegisterView: UIView {
            registerButton.addTarget(self, action: #selector(didTapRegister), for: .touchUpInside)
            addMemberButton.addTarget(self, action: #selector(didTapAddMember), for: .touchUpInside)
            addGenreButton.addTarget(self, action: #selector(didTapAddGenre), for: .touchUpInside)
-           uploadImageButton.addTarget(self, action: #selector(didTapUploadImage), for: .touchUpInside)
+           uploadImageButton.addTarget(self, action: #selector(didTapUploadBandLogo), for: .touchUpInside)
        }
 
     @objc private func didTapRegister() {
@@ -326,11 +326,6 @@ class StarRegisterView: UIView {
                return false
            }
 
-           guard bandLogoImageView.image != nil else {
-               showAlert(message: "Please select a band logo.")
-               return false
-           }
-
            return true
        }
 
@@ -360,8 +355,8 @@ class StarRegisterView: UIView {
            return topController
        }
 
-       @objc private func didTapUploadImage() {
-           delegate?.didTapUploadImage()
+       @objc private func didTapUploadBandLogo() {
+           delegate?.didTapUploadBandLogo()
        }
 
        @objc private func didTapBack() {
