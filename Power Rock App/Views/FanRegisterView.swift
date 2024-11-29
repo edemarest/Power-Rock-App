@@ -1,16 +1,107 @@
 import UIKit
+import FirebaseAuth
+import FirebaseFirestore
 
+// MARK: - FanRegisterViewDelegate Protocol
+// Protocol defining methods for Fan registration screen interactions
 protocol FanRegisterViewDelegate: AnyObject {
     func didTapFanBackButton()
     func didTapFanRegisterButton(firstName: String, email: String, password: String, genres: [String])
 }
 
+// MARK: - FanRegisterViewController
+// ViewController for managing Fan registration and interacting with Firebase
+class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
+    
+    // Set up the view when the controller is loaded
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.title = "Register as a Fan"
+        setupFanRegisterView()
+    }
+
+    // Set up the Fan registration view and add it to the view hierarchy
+    private func setupFanRegisterView() {
+        let fanRegisterView = FanRegisterView()
+        fanRegisterView.delegate = self
+        fanRegisterView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(fanRegisterView)
+
+        NSLayoutConstraint.activate([
+            fanRegisterView.topAnchor.constraint(equalTo: view.topAnchor),
+            fanRegisterView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            fanRegisterView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            fanRegisterView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
+    }
+
+    // MARK: - FanRegisterViewDelegate Methods
+    // Navigate back to the previous screen
+    func didTapFanBackButton() {
+        navigationController?.popViewController(animated: true)
+    }
+
+    // Handle Fan registration with Firebase
+    func didTapFanRegisterButton(firstName: String, email: String, password: String, genres: [String]) {
+        Auth.auth().createUser(withEmail: email, password: password) { [weak self] authResult, error in
+            guard let self = self else { return }
+
+            if let error = error {
+                print("Error registering: \(error.localizedDescription)")
+                self.showAlert(message: "Registration failed. Please try again.")
+                return
+            }
+
+            guard let uid = authResult?.user.uid else {
+                print("Error: User ID not found after registration.")
+                self.showAlert(message: "Unexpected error occurred. Please try again.")
+                return
+            }
+
+            // Save user data to Firestore
+            self.saveUserData(uid: uid, firstName: firstName, genres: genres)
+        }
+    }
+
+    // Save user data to Firestore
+    private func saveUserData(uid: String, firstName: String, genres: [String]) {
+        let userData: [String: Any] = [
+            "userType": "Fan",
+            "firstName": firstName,
+            "genres": genres
+        ]
+
+        Firestore.firestore().collection("users").document(uid).setData(userData) { error in
+            if let error = error {
+                print("Error saving user data: \(error.localizedDescription)")
+                self.showAlert(message: "Failed to save user data. Please try again.")
+                return
+            }
+
+            print("Fan registration successful!")
+            self.navigateToFanHome()
+        }
+    }
+
+    // Show alert with a message
+    private func showAlert(message: String) {
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+
+    // Navigate to Fan home screen after successful registration
+    private func navigateToFanHome() {
+        let fanHomeVC = FanHomeViewController()
+        navigationController?.pushViewController(fanHomeVC, animated: true)
+    }
+}
+
+// MARK: - FanRegisterView
+// Custom view for displaying the Fan registration form
 class FanRegisterView: UIView {
 
     // MARK: - UI Elements
-    let backButton = UIButton(type: .system)
-    let titleLabel = UILabel()
-
     let nameLabel = UILabel()
     let nameTextField = UITextField()
 
@@ -27,7 +118,6 @@ class FanRegisterView: UIView {
 
     let registerButton = UIButton(type: .system)
 
-    // MARK: - Data Storage
     private var genresArray: [String] = []
 
     weak var delegate: FanRegisterViewDelegate?
@@ -48,20 +138,11 @@ class FanRegisterView: UIView {
     }
 
     // MARK: - UI Setup
+    // Initialize and set up UI elements
     private func setupUIElements() {
         backgroundColor = .white
 
-        // Back Button
-        backButton.setTitle("Back", for: .normal)
-        addSubview(backButton)
-
-        // Title Label
-        titleLabel.text = "Register as a Fan"
-        titleLabel.font = UIFont.boldSystemFont(ofSize: 18)
-        titleLabel.textAlignment = .center
-        addSubview(titleLabel)
-
-        // Name
+        // Name Label and TextField
         nameLabel.text = "Name"
         nameLabel.font = UIFont.systemFont(ofSize: 16)
         addSubview(nameLabel)
@@ -70,7 +151,7 @@ class FanRegisterView: UIView {
         nameTextField.borderStyle = .roundedRect
         addSubview(nameTextField)
 
-        // Genres
+        // Genres Label, TextField, and Add Genre Button
         genresLabel.text = "Genres:"
         genresLabel.font = UIFont.systemFont(ofSize: 16)
         addSubview(genresLabel)
@@ -89,7 +170,7 @@ class FanRegisterView: UIView {
         genresContainer.spacing = 8
         addSubview(genresContainer)
 
-        // Email
+        // Email Label and TextField
         emailLabel.text = "Email"
         emailLabel.font = UIFont.systemFont(ofSize: 16)
         addSubview(emailLabel)
@@ -100,7 +181,7 @@ class FanRegisterView: UIView {
         emailTextField.autocapitalizationType = .none
         addSubview(emailTextField)
 
-        // Password
+        // Password Label and TextField
         passwordLabel.text = "Password"
         passwordLabel.font = UIFont.systemFont(ofSize: 16)
         addSubview(passwordLabel)
@@ -121,36 +202,19 @@ class FanRegisterView: UIView {
         addSubview(registerButton)
     }
 
+    // MARK: - Constraints
+    // Set up Auto Layout constraints for UI elements
     private func setupConstraints() {
-        backButton.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        nameLabel.translatesAutoresizingMaskIntoConstraints = false
-        nameTextField.translatesAutoresizingMaskIntoConstraints = false
-
-        genresLabel.translatesAutoresizingMaskIntoConstraints = false
-        genresTextField.translatesAutoresizingMaskIntoConstraints = false
-        addGenreButton.translatesAutoresizingMaskIntoConstraints = false
-        genresContainer.translatesAutoresizingMaskIntoConstraints = false
-
-        emailLabel.translatesAutoresizingMaskIntoConstraints = false
-        emailTextField.translatesAutoresizingMaskIntoConstraints = false
-
-        passwordLabel.translatesAutoresizingMaskIntoConstraints = false
-        passwordTextField.translatesAutoresizingMaskIntoConstraints = false
-
-        registerButton.translatesAutoresizingMaskIntoConstraints = false
+        let subviews = [
+            nameLabel, nameTextField,
+            genresLabel, genresTextField, addGenreButton, genresContainer,
+            emailLabel, emailTextField, passwordLabel, passwordTextField, registerButton
+        ]
+        subviews.forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
 
         NSLayoutConstraint.activate([
-            // Back Button and Title
-            backButton.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 10),
-            backButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
-
-            titleLabel.centerYAnchor.constraint(equalTo: backButton.centerYAnchor),
-            titleLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
-
             // Name
-            nameLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
+            nameLabel.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 20),
             nameLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
 
             nameTextField.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 5),
@@ -202,142 +266,45 @@ class FanRegisterView: UIView {
         ])
     }
 
+    // MARK: - Actions
+    // Set up actions for button taps
     private func setupActions() {
-        backButton.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
         registerButton.addTarget(self, action: #selector(didTapRegister), for: .touchUpInside)
         addGenreButton.addTarget(self, action: #selector(didTapAddGenre), for: .touchUpInside)
     }
 
-    // MARK: - Actions
+    // MARK: - Button Actions
+    // Handle the Register button tap
     @objc private func didTapRegister() {
-        guard validateFields() else { return }
-
-        let name = nameTextField.text ?? "N/A"
-        let email = emailTextField.text ?? "N/A"
-        let password = passwordTextField.text ?? "N/A"
-
-        print("""
-        NAME: \(name)
-        EMAIL: \(email)
-        PASSWORD: \(password)
-        GENRES: \(genresArray)
-        """)
-
-        delegate?.didTapFanRegisterButton(
-            firstName: name,
-            email: email,
-            password: password,
-            genres: genresArray
-        )
+        guard let name = nameTextField.text,
+              let email = emailTextField.text,
+              let password = passwordTextField.text else { return }
+        delegate?.didTapFanRegisterButton(firstName: name, email: email, password: password, genres: genresArray)
     }
 
-    @objc private func didTapBack() {
-        delegate?.didTapFanBackButton()
-    }
-
+    // Handle adding genre to the list
     @objc private func didTapAddGenre() {
         guard let genre = genresTextField.text, !genre.isEmpty else { return }
+
+        // Add genre to the array
         genresArray.append(genre)
 
-        let tagView = createTagView(for: genre, in: &genresArray, container: genresContainer)
-        genresContainer.addArrangedSubview(tagView)
+        // Create a label for the genre
+        let genreLabel = UILabel()
+        genreLabel.text = genre
+        genreLabel.font = UIFont.systemFont(ofSize: 14)
+        genreLabel.textColor = .black
+        genreLabel.backgroundColor = .systemGray5
+        genreLabel.layer.cornerRadius = 8
+        genreLabel.clipsToBounds = true
+        genreLabel.textAlignment = .center
+        genreLabel.translatesAutoresizingMaskIntoConstraints = false
+        genreLabel.heightAnchor.constraint(equalToConstant: 30).isActive = true
+
+        // Add the label to the genresContainer
+        genresContainer.addArrangedSubview(genreLabel)
+
+        // Clear the text field
         genresTextField.text = ""
-    }
-
-    private func validateFields() -> Bool {
-        guard let email = emailTextField.text, isValidEmail(email) else {
-            showAlert(message: "Please enter a valid email address.")
-            return false
-        }
-
-        guard let password = passwordTextField.text, password.count >= 6 else {
-            showAlert(message: "Password must be at least 6 characters long.")
-            return false
-        }
-
-        guard let name = nameTextField.text, !name.isEmpty else {
-            showAlert(message: "Name is required.")
-            return false
-        }
-
-        guard !genresArray.isEmpty else {
-            showAlert(message: "Please add at least one genre.")
-            return false
-        }
-
-        return true
-    }
-
-    private func isValidEmail(_ email: String) -> Bool {
-        let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
-        return NSPredicate(format: "SELF MATCHES %@", emailRegEx).evaluate(with: email)
-    }
-
-    private func showAlert(message: String) {
-        guard let topVC = findTopViewController() else { return }
-        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        topVC.present(alert, animated: true)
-    }
-
-    private func findTopViewController() -> UIViewController? {
-        var topVC = UIApplication.shared.windows.first?.rootViewController
-        while let presentedVC = topVC?.presentedViewController {
-            topVC = presentedVC
-        }
-        return topVC
-    }
-    
-    private func createTagView(for text: String, in array: inout [String], container: UIStackView) -> UIView {
-        // Tag view container
-        let tagView = UIView()
-        tagView.backgroundColor = .systemTeal.withAlphaComponent(0.8)
-        tagView.layer.cornerRadius = 10
-        tagView.translatesAutoresizingMaskIntoConstraints = false
-
-        // Label for the tag
-        let label = UILabel()
-        label.text = text
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .white
-        label.translatesAutoresizingMaskIntoConstraints = false
-
-        // Remove button for the tag
-        let removeButton = UIButton(type: .system)
-        removeButton.setTitle("x", for: .normal)
-        removeButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
-        removeButton.setTitleColor(.white, for: .normal)
-        removeButton.translatesAutoresizingMaskIntoConstraints = false
-        removeButton.tag = container.arrangedSubviews.count // Use tag to identify index
-        removeButton.addTarget(self, action: #selector(didTapRemoveTag(_:)), for: .touchUpInside)
-
-        // Add label and remove button to the tag view
-        tagView.addSubview(label)
-        tagView.addSubview(removeButton)
-
-        // Constraints for the tag view components
-        NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: tagView.leadingAnchor, constant: 8),
-            label.centerYAnchor.constraint(equalTo: tagView.centerYAnchor),
-
-            removeButton.leadingAnchor.constraint(equalTo: label.trailingAnchor, constant: 8),
-            removeButton.trailingAnchor.constraint(equalTo: tagView.trailingAnchor, constant: -8),
-            removeButton.centerYAnchor.constraint(equalTo: tagView.centerYAnchor),
-
-            tagView.heightAnchor.constraint(equalToConstant: 40)
-        ])
-
-        return tagView
-    }
-
-    @objc private func didTapRemoveTag(_ sender: UIButton) {
-        guard let tagView = sender.superview else { return }
-        guard let container = tagView.superview as? UIStackView else { return }
-
-        if container == genresContainer, let index = container.arrangedSubviews.firstIndex(of: tagView) {
-            genresArray.remove(at: index)
-        }
-        container.removeArrangedSubview(tagView)
-        tagView.removeFromSuperview()
     }
 }
