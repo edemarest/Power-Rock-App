@@ -152,8 +152,11 @@ class WorkoutDetailsView: UIViewController {
     
     // Navigate to the Fan page (for Fan users)
     @objc private func goToDoWorkoutPage() {
-        print("Go to do workout page")
+        let doWorkoutVC = DoWorkoutViewController()
+        doWorkoutVC.workout = workout  // Pass the workout data to DoWorkoutView
+        navigationController?.pushViewController(doWorkoutVC, animated: true)
     }
+    
 }
 
 // MARK: - UITableViewDataSource & UITableViewDelegate
