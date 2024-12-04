@@ -83,3 +83,12 @@
 ### 5. **Remove Repeated Functions/Logic**
    - Clean up the code by removing any repeated functions or logic.  
    - Ensure the structure of each view is consistent, making the code easier to maintain.
+
+---
+
+## Work Session 1 Notes 12/03/24
+
+### 1. **CreateWorkoutView Page**
+    - After you *Publish* a workout, it is not updated in the Home page when redirected, it is updated when you *Logout* and *Login*
+
+    
