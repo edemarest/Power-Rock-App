@@ -23,9 +23,8 @@ class WorkoutDetailsView: UIViewController {
         super.viewDidLoad()
         
         setupUI() // Set up the user interface
-        setupNavigationBar() // Set up the navigation bar with buttons
         
-        fetchCurrentUserData() // Fetch current user info (Star/Fan)
+        fetchCurrentUserData() // Navigation bar setup happens after fetching user data now
         
         if let workout = workout {
             populateWorkoutDetails(workout) // Populate the workout details
@@ -111,20 +110,25 @@ class WorkoutDetailsView: UIViewController {
     // MARK: - Fetch Current User Data
     // Fetch current user type from Firestore (Star or Fan)
     private func fetchCurrentUserData() {
-        if let currentUser = Auth.auth().currentUser {
-            let db = Firestore.firestore()
-            db.collection("users").document(currentUser.uid).getDocument { [weak self] snapshot, error in
-                guard let self = self else { return }
-                
-                if let error = error {
-                    print("Error fetching user data: \(error.localizedDescription)")
-                    return
-                }
-                
-                if let data = snapshot?.data(), let userType = data["userType"] as? String {
-                    self.currentUserType = userType
-                }
+        guard let currentUser = Auth.auth().currentUser else { return }
+        
+        let db = Firestore.firestore()
+        db.collection("users").document(currentUser.uid).getDocument { [weak self] snapshot, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("Error fetching user data: \(error.localizedDescription)")
+                return
             }
+            
+            if let data = snapshot?.data(), let userType = data["userType"] as? String {
+                self.currentUserType = userType
+            } else {
+                self.currentUserType = "Fan" // Default to "Fan" if no type is found
+            }
+            
+            // Update navigation bar after fetching user data
+            self.setupNavigationBar()
         }
     }
     
@@ -148,15 +152,21 @@ class WorkoutDetailsView: UIViewController {
     // Navigate to the workout edit screen (for Star users)
     @objc private func editWorkout() {
         print("Go to edit workout page")
+        let editVC = EditWorkoutViewController()
+        editVC.workout = workout
+        editVC.onWorkoutUpdated = { [weak self] updatedWorkout in
+            self?.workout = updatedWorkout
+            self?.populateWorkoutDetails(updatedWorkout)
+        }
+        navigationController?.pushViewController(editVC, animated: true)
     }
-    
+
     // Navigate to the Fan page (for Fan users)
     @objc private func goToDoWorkoutPage() {
         let doWorkoutVC = DoWorkoutViewController()
         doWorkoutVC.workout = workout  // Pass the workout data to DoWorkoutView
         navigationController?.pushViewController(doWorkoutVC, animated: true)
     }
-    
 }
 
 // MARK: - UITableViewDataSource & UITableViewDelegate

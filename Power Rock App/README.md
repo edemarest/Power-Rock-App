@@ -92,3 +92,8 @@
     - After you *Publish* a workout, it is not updated in the Home page when redirected, it is updated when you *Logout* and *Login*
 
     
+---
+## MaiAnh's Notes 12/04/24
+### 1. **EditWorkoutView Page**
+    - Right now only the title of a workout is editable —need to work on editing sets and their exercises
+    - Saving an edit works only when you *Logout* and *Login* (like in the **CreateWorkoutView Page**) AND it does not technically update the cell but creates another one and doesn't remove the original workout from the db
