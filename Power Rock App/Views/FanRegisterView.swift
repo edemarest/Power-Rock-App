@@ -99,6 +99,7 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
 
 // MARK: - FanRegisterView
 // Custom view for displaying the Fan registration form
+// MARK: - Updated FanRegisterView
 class FanRegisterView: UIView {
 
     // MARK: - UI Elements
@@ -138,31 +139,43 @@ class FanRegisterView: UIView {
     }
 
     // MARK: - UI Setup
-    // Initialize and set up UI elements
     private func setupUIElements() {
-        backgroundColor = .white
+        backgroundColor = .black
+
+        // Apply common edgy font
+        let edgyFont = UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16)
 
         // Name Label and TextField
         nameLabel.text = "Name"
-        nameLabel.font = UIFont.systemFont(ofSize: 16)
+        nameLabel.font = edgyFont
+        nameLabel.textColor = .white
         addSubview(nameLabel)
 
         nameTextField.placeholder = "Enter your name"
-        nameTextField.borderStyle = .roundedRect
+        nameTextField.borderStyle = .none
+        nameTextField.layer.borderWidth = 1
+        nameTextField.layer.borderColor = UIColor.white.cgColor
+        nameTextField.textColor = .white
+        nameTextField.font = edgyFont
         addSubview(nameTextField)
 
         // Genres Label, TextField, and Add Genre Button
         genresLabel.text = "Genres:"
-        genresLabel.font = UIFont.systemFont(ofSize: 16)
+        genresLabel.font = edgyFont
+        genresLabel.textColor = .white
         addSubview(genresLabel)
 
         genresTextField.placeholder = "Enter genre"
-        genresTextField.borderStyle = .roundedRect
+        genresTextField.borderStyle = .none
+        genresTextField.layer.borderWidth = 1
+        genresTextField.layer.borderColor = UIColor.white.cgColor
+        genresTextField.textColor = .white
+        genresTextField.font = edgyFont
         addSubview(genresTextField)
 
         addGenreButton.setTitle("+", for: .normal)
-        addGenreButton.backgroundColor = .systemBlue
-        addGenreButton.setTitleColor(.white, for: .normal)
+        addGenreButton.backgroundColor = .white
+        addGenreButton.setTitleColor(.black, for: .normal)
         addGenreButton.layer.cornerRadius = 20
         addSubview(addGenreButton)
 
@@ -172,38 +185,42 @@ class FanRegisterView: UIView {
 
         // Email Label and TextField
         emailLabel.text = "Email"
-        emailLabel.font = UIFont.systemFont(ofSize: 16)
+        emailLabel.font = edgyFont
+        emailLabel.textColor = .white
         addSubview(emailLabel)
 
         emailTextField.placeholder = "Enter email"
-        emailTextField.borderStyle = .roundedRect
-        emailTextField.keyboardType = .emailAddress
-        emailTextField.autocapitalizationType = .none
+        emailTextField.borderStyle = .none
+        emailTextField.layer.borderWidth = 1
+        emailTextField.layer.borderColor = UIColor.white.cgColor
+        emailTextField.textColor = .white
+        emailTextField.font = edgyFont
         addSubview(emailTextField)
 
         // Password Label and TextField
         passwordLabel.text = "Password"
-        passwordLabel.font = UIFont.systemFont(ofSize: 16)
+        passwordLabel.font = edgyFont
+        passwordLabel.textColor = .white
         addSubview(passwordLabel)
 
         passwordTextField.placeholder = "Enter password"
-        passwordTextField.borderStyle = .roundedRect
+        passwordTextField.borderStyle = .none
+        passwordTextField.layer.borderWidth = 1
+        passwordTextField.layer.borderColor = UIColor.white.cgColor
+        passwordTextField.textColor = .white
+        passwordTextField.font = edgyFont
         passwordTextField.isSecureTextEntry = true
-        passwordTextField.textContentType = .none
-        passwordTextField.autocorrectionType = .no
-        passwordTextField.spellCheckingType = .no
         addSubview(passwordTextField)
 
         // Register Button
         registerButton.setTitle("Register", for: .normal)
-        registerButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
-        registerButton.backgroundColor = .black
-        registerButton.setTitleColor(.white, for: .normal)
+        registerButton.titleLabel?.font = edgyFont
+        registerButton.backgroundColor = .white
+        registerButton.setTitleColor(.black, for: .normal)
         addSubview(registerButton)
     }
 
     // MARK: - Constraints
-    // Set up Auto Layout constraints for UI elements
     private func setupConstraints() {
         let subviews = [
             nameLabel, nameTextField,
@@ -267,7 +284,6 @@ class FanRegisterView: UIView {
     }
 
     // MARK: - Actions
-    // Set up actions for button taps
     private func setupActions() {
         registerButton.addTarget(self, action: #selector(didTapRegister), for: .touchUpInside)
         addGenreButton.addTarget(self, action: #selector(didTapAddGenre), for: .touchUpInside)
