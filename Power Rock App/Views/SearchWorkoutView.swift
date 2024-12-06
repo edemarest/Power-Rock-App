@@ -1,4 +1,5 @@
 import UIKit
+import FirebaseFirestore
 
 // MARK: - SearchWorkoutViewDelegate Protocol
 protocol SearchWorkoutViewDelegate: AnyObject {
@@ -9,8 +10,8 @@ protocol SearchWorkoutViewDelegate: AnyObject {
 class SearchWorkoutView: UIViewController {
 
     // MARK: - Properties
-    var workouts: [Workout] = []
-    var filteredWorkouts: [Workout] = []
+    var workouts: [Workout] = [] // All workouts fetched from the database
+    var filteredWorkouts: [Workout] = [] // Workouts filtered based on search criteria
     weak var delegate: SearchWorkoutViewDelegate?
 
     private let filterLabel: UILabel = {
@@ -20,6 +21,14 @@ class SearchWorkoutView: UIViewController {
         label.textAlignment = .center
         label.numberOfLines = 0
         return label
+    }()
+    
+    private let backgroundImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "Background_3")
+        imageView.alpha = 0.4
+        imageView.contentMode = .scaleAspectFill
+        return imageView
     }()
 
     private let segmentedControl = UISegmentedControl(items: ["Band", "Genre", "Name"])
@@ -72,31 +81,114 @@ class SearchWorkoutView: UIViewController {
         setupConstraints()
         setupActions()
         updateSearchPlaceholder()
+        fetchAllWorkouts()
+    }
+
+    // MARK: - Fetch Workouts
+    private func fetchAllWorkouts() {
+        let db = Firestore.firestore()
+        db.collection("workouts").getDocuments { [weak self] (snapshot, error) in
+            guard let self = self else { return }
+            if let error = error {
+                print("Error fetching workouts: \(error.localizedDescription)")
+                return
+            }
+
+            guard let documents = snapshot?.documents else {
+                print("No workout data found")
+                return
+            }
+
+            // Parse Firestore data into Workout objects
+            self.workouts = documents.compactMap { document in
+                let data = document.data()
+                guard let bandName = data["bandName"] as? String,
+                      let genres = data["genres"] as? [String],
+                      let title = data["title"] as? String,
+                      let difficulty = data["difficulty"] as? Int,
+                      let setsData = data["sets"] as? [[String: Any]] else { return nil }
+
+                let sets = setsData.compactMap { setDict -> WorkoutSet? in
+                    guard let exercises = setDict["exercises"] as? [[String: Any]] else { return nil }
+                    let parsedExercises = exercises.compactMap { exerciseDict -> (name: String, reps: Int)? in
+                        guard let name = exerciseDict["name"] as? String,
+                              let reps = exerciseDict["reps"] as? Int else { return nil }
+                        return (name: name, reps: reps)
+                    }
+                    return WorkoutSet(exercises: parsedExercises)
+                }
+
+                return Workout(bandName: bandName, genres: genres, title: title, difficulty: difficulty, sets: sets)
+            }
+
+            // Initially, display all workouts
+            self.filteredWorkouts = self.workouts
+            self.tableView.reloadData()
+        }
     }
 
     // MARK: - UI Setup
     private func setupUI() {
-        view.backgroundColor = .white
+        view.backgroundColor = .black
 
-        // Add filter label
+        // Add background image
+        view.addSubview(backgroundImageView)
+        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
+
+        // Configure filter label
+        UIHelper.configureLabel(
+            filterLabel,
+            text: "Pick a filter for the Power Rock workout library",
+            font: UIFont.systemFont(ofSize: 16, weight: .medium),
+            textColor: .white
+        )
         view.addSubview(filterLabel)
 
-        // Add segmented control for filter options
+        // Configure segmented control
         segmentedControl.selectedSegmentIndex = 0
+        segmentedControl.backgroundColor = .darkGray
+        segmentedControl.selectedSegmentTintColor = .white
+        segmentedControl.setTitleTextAttributes([.foregroundColor: UIColor.black], for: .selected)
+        segmentedControl.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .normal)
         view.addSubview(segmentedControl)
 
-        // Add search bar
+        // Configure search bar
         searchBar.delegate = self
+        searchBar.searchTextField.textColor = .white
+        searchBar.searchTextField.backgroundColor = .darkGray
         view.addSubview(searchBar)
 
-        // Add difficulty slider and label
+        // Configure difficulty slider
+        difficultySlider.minimumValue = 1
+        difficultySlider.maximumValue = 5
+        difficultySlider.value = 1
+        difficultySlider.isContinuous = true
+        difficultySlider.minimumTrackTintColor = .white
+        difficultySlider.maximumTrackTintColor = .gray
         view.addSubview(difficultySlider)
+
+        // Configure slider label
+        UIHelper.configureLabel(
+            sliderLabel,
+            text: "Difficulty: All",
+            font: UIFont.systemFont(ofSize: 14),
+            textColor: .white
+        )
         view.addSubview(sliderLabel)
 
-        // Add reset button
+        // Configure reset button
+        UIHelper.configureButton(
+            resetButton,
+            title: "Reset",
+            font: UIFont.systemFont(ofSize: 16, weight: .bold),
+            backgroundColor: .darkGray,
+            textColor: .white,
+            cornerRadius: 5
+        )
         view.addSubview(resetButton)
 
-        // Add table view for displaying results
+        // Configure table view
+        UIHelper.configureTableView(tableView)
         tableView.register(WorkoutTableViewCell.self, forCellReuseIdentifier: "workoutCell")
         tableView.dataSource = self
         tableView.delegate = self
@@ -114,38 +206,36 @@ class SearchWorkoutView: UIViewController {
         tableView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            // Filter label
+            backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+
             filterLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             filterLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
             filterLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
 
-            // Segmented control
             segmentedControl.topAnchor.constraint(equalTo: filterLabel.bottomAnchor, constant: 10),
             segmentedControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
             segmentedControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
             segmentedControl.heightAnchor.constraint(equalToConstant: 40),
 
-            // Search bar
             searchBar.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 10),
             searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
             searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
 
-            // Difficulty slider
             difficultySlider.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 20),
             difficultySlider.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
             difficultySlider.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -100),
 
-            // Slider label
             sliderLabel.centerYAnchor.constraint(equalTo: difficultySlider.centerYAnchor),
             sliderLabel.leadingAnchor.constraint(equalTo: difficultySlider.trailingAnchor, constant: 10),
 
-            // Reset button
             resetButton.topAnchor.constraint(equalTo: difficultySlider.bottomAnchor, constant: 10),
             resetButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
             resetButton.widthAnchor.constraint(equalToConstant: 70),
             resetButton.heightAnchor.constraint(equalToConstant: 30),
 
-            // Table view
             tableView.topAnchor.constraint(equalTo: resetButton.bottomAnchor, constant: 10),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -175,6 +265,7 @@ class SearchWorkoutView: UIViewController {
         selectedDifficulty = nil
         difficultySlider.value = 1
         sliderLabel.text = "Difficulty: All"
+        searchBar.text = ""
         filterWorkouts()
     }
 
@@ -207,9 +298,7 @@ class SearchWorkoutView: UIViewController {
     }
 
     private func applyDifficultyFilter(to workouts: [Workout]) -> [Workout] {
-        guard let difficulty = selectedDifficulty else {
-            return workouts // Return all workouts if no difficulty is selected
-        }
+        guard let difficulty = selectedDifficulty else { return workouts }
         return workouts.filter { $0.difficulty == difficulty }
     }
 }
@@ -236,6 +325,24 @@ extension SearchWorkoutView: UITableViewDataSource, UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        delegate?.updateFilteredWorkouts(with: filteredWorkouts)
+        let selectedWorkout = filteredWorkouts[indexPath.row]
+
+        // Navigate to WorkoutDetailsView
+        let workoutDetailsVC = WorkoutDetailsView()
+        workoutDetailsVC.workout = selectedWorkout
+        workoutDetailsVC.delegate = self // Set delegate
+        navigationController?.pushViewController(workoutDetailsVC, animated: true)
     }
+    
+}
+
+extension SearchWorkoutView: WorkoutDetailsDelegate {
+    func didUpdateWorkouts() {
+        print("Workout updated in SearchWorkoutView. Refreshing list...")
+        fetchAllWorkouts() // Refresh SearchWorkoutView's list
+
+        // Notify delegate (FanHomeViewController) to refresh
+        delegate?.updateFilteredWorkouts(with: workouts)
+    }  
+    
 }

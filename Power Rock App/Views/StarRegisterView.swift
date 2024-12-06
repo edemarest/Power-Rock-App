@@ -160,18 +160,27 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate, UI
      }
 
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        // Try to get the selected image
         if let selectedImage = info[.editedImage] as? UIImage {
-            if let starRegisterView = view as? StarRegisterView {
-                starRegisterView.bandLogoImageView.image = selectedImage
-            }
+            updateBandLogo(with: selectedImage)
         } else if let originalImage = info[.originalImage] as? UIImage {
-            if let starRegisterView = view as? StarRegisterView {
-                starRegisterView.bandLogoImageView.image = originalImage
-            }
+            updateBandLogo(with: originalImage)
         } else {
             print("Error: Unable to retrieve selected image.")
         }
+        
+        // Dismiss the picker
         dismiss(animated: true, completion: nil)
+    }
+
+    private func updateBandLogo(with image: UIImage) {
+        if let starRegisterView = view as? StarRegisterView {
+            starRegisterView.bandLogoImageView.image = image
+            starRegisterView.bandLogoImageView.setNeedsLayout()
+            print("Band logo updated successfully.")
+        } else {
+            print("Failed to cast view to StarRegisterView.")
+        }
     }
 
      func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {

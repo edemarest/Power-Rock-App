@@ -17,10 +17,8 @@ class StarHomeViewController: UIViewController, StarHomeViewDelegate {
     // MARK: - Properties
     private let starHomeView = StarHomeView()
     var workouts: [Workout] = [] // Workouts to be displayed
-    let db = Firestore.firestore()
 
     // MARK: - View Lifecycle
-    // Set up UI and fetch workouts when the view is loaded
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -28,7 +26,6 @@ class StarHomeViewController: UIViewController, StarHomeViewDelegate {
     }
 
     // MARK: - Setup Methods
-    // Set up the UI elements including navigation bar and StarHomeView
     private func setupUI() {
         view.addSubview(starHomeView)
         starHomeView.delegate = self
@@ -47,54 +44,21 @@ class StarHomeViewController: UIViewController, StarHomeViewDelegate {
     }
 
     // MARK: - Fetch Workouts
-    // Fetch workouts from Firestore and populate the workouts array
     private func fetchWorkouts() {
-        db.collection("workouts").getDocuments { [weak self] snapshot, error in
+        DataFetcher.fetchWorkouts { [weak self] workouts, error in
             guard let self = self else { return }
             if let error = error {
                 print("Error fetching workouts: \(error.localizedDescription)")
                 return
             }
 
-            var filteredWorkouts: [Workout] = []
-
-            for document in snapshot!.documents {
-                let data = document.data()
-                let bandName = data["bandName"] as? String ?? ""
-                let genres = data["genres"] as? [String] ?? []
-                let title = data["title"] as? String ?? ""
-                let difficulty = data["difficulty"] as? Int ?? 1
-                let timesCompleted = data["timesCompleted"] as? Int ?? 0
-
-                var sets: [WorkoutSet] = []
-                if let setsData = data["sets"] as? [[String: Any]] {
-                    for setData in setsData {
-                        if let exercises = setData["exercises"] as? [[String: Any]] {
-                            var exercisesList: [(String, Int)] = []
-                            for exercise in exercises {
-                                if let name = exercise["name"] as? String,
-                                   let reps = exercise["reps"] as? Int {
-                                    exercisesList.append((name, reps))
-                                }
-                            }
-                            let workoutSet = WorkoutSet(exercises: exercisesList)
-                            sets.append(workoutSet)
-                        }
-                    }
-                }
-
-                let workout = Workout(bandName: bandName, genres: genres, title: title, difficulty: difficulty, sets: sets, timesCompleted: timesCompleted)
-                filteredWorkouts.append(workout)
-            }
-
-            self.workouts = filteredWorkouts
+            self.workouts = workouts ?? []
             self.starHomeView.workouts = self.workouts
             self.starHomeView.tableView.reloadData()
         }
     }
 
     // MARK: - Actions
-    // Handle logout button tap and sign out the user
     @objc private func didTapLogoutButton() {
         do {
             try Auth.auth().signOut()
@@ -104,24 +68,20 @@ class StarHomeViewController: UIViewController, StarHomeViewDelegate {
         }
     }
 
-    // Handle add workout button tap and navigate to create workout screen
     @objc private func didTapAddWorkoutButton() {
         let createWorkoutVC = CreateWorkoutViewController()
         navigationController?.pushViewController(createWorkoutVC, animated: true)
     }
 
     // MARK: - StarHomeViewDelegate Methods
-    // Handle logout action from StarHomeView
     func didTapLogout() {
         print("Logout tapped from StarHomeView")
     }
 
-    // Handle add workout action from StarHomeView
     func didTapAddWorkout() {
         print("Add Workout tapped from StarHomeView")
     }
 
-    // Handle workout cell selection and navigate to WorkoutDetails screen
     func didTapWorkoutCell(with workout: Workout) {
         let workoutDetailsVC = WorkoutDetailsView()
         workoutDetailsVC.workout = workout
@@ -129,7 +89,6 @@ class StarHomeViewController: UIViewController, StarHomeViewDelegate {
     }
 
     // MARK: - Navigation Methods
-    // Navigate to the Welcome Screen after sign-out
     private func navigateToWelcomeScreen() {
         let welcomeVC = WelcomeViewController()
         if let navigationController = navigationController {
@@ -141,6 +100,7 @@ class StarHomeViewController: UIViewController, StarHomeViewDelegate {
         }
     }
 }
+
 
 // MARK: - StarHomeView
 // Custom view for displaying the workouts and user details on the StarHome screen

@@ -139,42 +139,29 @@ struct UIHelper {
         tableView.separatorStyle = .none
         tableView.layer.cornerRadius = 10
     }
-    // Gradient colors for difficulty levels
-    static func gradientForDifficulty(difficulty: Int) -> CAGradientLayer? {
-        let colors: [CGColor]
-
+    // Bright solid colors for difficulty levels
+    static func colorForDifficulty(difficulty: Int) -> UIColor {
         switch difficulty {
         case 1:
-            // Darker light green gradient
-            colors = [UIColor(red: 0.4, green: 0.6, blue: 0.4, alpha: 1).cgColor, // Darker green
-                      UIColor(red: 0.5, green: 0.7, blue: 0.5, alpha: 1).cgColor] // Slightly muted green
+            // Bright green
+            return UIColor(red: 0.6, green: 1.0, blue: 0.6, alpha: 1.0) // Light green
         case 2:
-            // Darker yellowish green gradient
-            colors = [UIColor(red: 0.4, green: 0.5, blue: 0.2, alpha: 1).cgColor, // Olive green
-                      UIColor(red: 0.5, green: 0.6, blue: 0.3, alpha: 1).cgColor] // Muted yellow-green
+            // Bright yellow-green
+            return UIColor(red: 0.8, green: 1.0, blue: 0.4, alpha: 1.0) // Yellowish-green
         case 3:
-            // Darker yellowish orange gradient
-            colors = [UIColor(red: 0.6, green: 0.4, blue: 0.2, alpha: 1).cgColor, // Dark mustard yellow
-                      UIColor(red: 0.7, green: 0.3, blue: 0.1, alpha: 1).cgColor] // Deep orange
+            // Bright orange
+            return UIColor(red: 1.0, green: 0.8, blue: 0.4, alpha: 1.0) // Light orange
         case 4:
-            // Darker orangish red gradient
-            colors = [UIColor(red: 0.6, green: 0.2, blue: 0.1, alpha: 1).cgColor, // Burnt orange
-                      UIColor(red: 0.7, green: 0.2, blue: 0.1, alpha: 1).cgColor] // Deep orange-red
+            // Bright red-orange
+            return UIColor(red: 1.0, green: 0.4, blue: 0.2, alpha: 1.0) // Red-orange
         case 5:
-            // Darker deep red gradient
-            colors = [UIColor(red: 0.5, green: 0.1, blue: 0.1, alpha: 1).cgColor, // Crimson red
-                      UIColor(red: 0.6, green: 0.2, blue: 0.1, alpha: 1).cgColor] // Deep red-orange
+            // Bright red
+            return UIColor(red: 1.0, green: 0.2, blue: 0.2, alpha: 1.0) // Light red
         default:
-            return nil
+            // Default bright gray
+            return UIColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 1.0) // Light gray
         }
-
-        let gradientLayer = CAGradientLayer()
-        gradientLayer.colors = colors
-        gradientLayer.startPoint = CGPoint(x: 0, y: 0.5) // Horizontal gradient
-        gradientLayer.endPoint = CGPoint(x: 1, y: 0.5)
-        return gradientLayer
     }
-
 }
 
 // MARK: - UITextField Extension

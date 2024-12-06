@@ -15,6 +15,7 @@ class CreateWorkoutViewController: UIViewController {
     var bandName: String = ""
     // To hold band genres fetched from Firestore
     var genres: [String] = []
+    var bandLogoUrl: String = ""
 
     // MARK: - UI Elements
     private let publishButton: UIButton = {
@@ -111,7 +112,7 @@ class CreateWorkoutViewController: UIViewController {
         navigationController?.popViewController(animated: true)
     }
 
-    // Publish the workout and save it to Firestore
+    // MARK: - Publish the workout and save it to Firestore
     @objc private func publishWorkout() {
         workoutTitle = workoutTitleTextField.text ?? ""
         difficulty = difficultyPicker.selectedSegmentIndex + 1
@@ -120,19 +121,38 @@ class CreateWorkoutViewController: UIViewController {
         print("Difficulty: \(difficulty)")
         print("Sets: \(sets)")
 
-        // Fetch the band name and genres and then create the workout
-        let workout = Workout(bandName: bandName, genres: genres, title: workoutTitle, difficulty: difficulty, sets: sets)
+        // Create the workout with the band logo URL
+        let workout = Workout(
+            bandName: bandName,
+            genres: genres,
+            title: workoutTitle,
+            difficulty: difficulty,
+            sets: sets,
+            bandLogoUrl: bandLogoUrl
+        )
         
-        // Here, you can save the workout to Firestore
+        // Save the workout to Firestore
         saveWorkoutToFirestore(workout)
 
         // Navigate back to the StarHomeViewController after publishing the workout
         if let navigationController = navigationController {
             for controller in navigationController.viewControllers {
                 if let starHomeVC = controller as? StarHomeViewController {
-                    navigationController.popToViewController(starHomeVC, animated: true)  // Pop back to StarHomeViewController
+                    navigationController.popToViewController(starHomeVC, animated: true)
                     return
                 }
+            }
+        }
+    }
+
+    // MARK: - Save workout to Firestore
+    private func saveWorkoutToFirestore(_ workout: Workout) {
+        let db = Firestore.firestore()
+        db.collection("workouts").addDocument(data: workout.toDict()) { error in
+            if let error = error {
+                print("Error adding workout: \(error.localizedDescription)")
+            } else {
+                print("Workout successfully added!")
             }
         }
     }
@@ -149,48 +169,19 @@ class CreateWorkoutViewController: UIViewController {
         difficulty = difficultyPicker.selectedSegmentIndex + 1
     }
 
-    // Fetch user details to get band name and genres
+    // MARK: - Fetch user details to get band name, genres, and logo URL
     private func fetchUserDetails() {
-        guard let uid = Auth.auth().currentUser?.uid else {
-            return
-        }
-
-        let db = Firestore.firestore()
-        db.collection("users").document(uid).getDocument { [weak self] snapshot, error in
+        DataFetcher.fetchUserDetails { [weak self] bandName, genres, bandLogoUrl, error in
             guard let self = self else { return }
-
             if let error = error {
                 print("Error fetching user details: \(error.localizedDescription)")
                 return
             }
 
-            guard let data = snapshot?.data(),
-                  let userType = data["userType"] as? String else {
-                print("Invalid user data.")
-                return
-            }
-
-            self.bandName = userType == "Star" ? data["bandName"] as? String ?? "" : ""
-            self.genres = data["genres"] as? [String] ?? []
-            print("Fetched Band Details - Band Name: \(self.bandName), Genres: \(self.genres)")
-        }
-    }
-
-    // Save workout to Firestore
-    private func saveWorkoutToFirestore(_ workout: Workout) {
-        let db = Firestore.firestore()
-        db.collection("workouts").addDocument(data: [
-            "bandName": workout.bandName,
-            "genres": workout.genres,
-            "title": workout.title,
-            "difficulty": workout.difficulty,
-            "sets": workout.sets.map { $0.toDict() }
-        ]) { error in
-            if let error = error {
-                print("Error adding workout: \(error.localizedDescription)")
-            } else {
-                print("Workout successfully added!")
-            }
+            self.bandName = bandName ?? ""
+            self.genres = genres ?? []
+            self.bandLogoUrl = bandLogoUrl ?? "Default_Workout_Image"
+            print("Fetched Band Details - Band Name: \(self.bandName), Genres: \(self.genres), Logo URL: \(self.bandLogoUrl)")
         }
     }
 }

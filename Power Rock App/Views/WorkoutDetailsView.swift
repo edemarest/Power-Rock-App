@@ -2,73 +2,123 @@ import UIKit
 import FirebaseAuth
 import FirebaseFirestore
 
-// MARK: - WorkoutDetails
-// ViewController to display detailed information about a specific workout
-class WorkoutDetailsView: UIViewController {
-    
+// MARK: - WorkoutDetailsDelegate Protocol
+protocol WorkoutDetailsDelegate: AnyObject {
+    func didUpdateWorkouts()
+}
+
+// MARK: - WorkoutDetailsView
+class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDelegate {
     // MARK: - Properties
-    var workout: Workout? // The workout object passed from StarHomeView
+    var workout: Workout? // The workout object passed from FanHomeView or other screens
     var currentUserType: String = "" // This will be either "Star" or "Fan"
-    
+    weak var delegate: WorkoutDetailsDelegate?
+
     // MARK: - UI Elements
     private let titleLabel = UILabel()
     private let bandNameLabel = UILabel()
     private let genresLabel = UILabel()
     private let setsTableView = UITableView()
+    private let doWorkoutButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Do Workout", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = UIColor.systemBlue
+        button.layer.cornerRadius = 10
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isHidden = true // Hidden until confirmed user is a Fan
+        return button
+    }()
+    private let addToMyWorkoutsButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = UIColor.systemRed
+        button.layer.cornerRadius = 10
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isHidden = true // Hidden until confirmed user is a Fan
+        return button
+    }()
+    private let backgroundImageView: UIImageView = {
+        let imageView = UIImageView(image: UIImage(named: "WorkoutBackground"))
+        imageView.contentMode = .scaleAspectFill
+        imageView.alpha = 0.3
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    private let separatorView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.lightGray.withAlphaComponent(0.5)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
     private var sets: [WorkoutSet] = []
 
     // MARK: - View Lifecycle
-    // Set up the UI, navigation bar and fetch current user info
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        setupUI() // Set up the user interface
-        
-        fetchCurrentUserData() // Navigation bar setup happens after fetching user data now
-        
+        setupUI()
+        fetchCurrentUserData()
         if let workout = workout {
-            populateWorkoutDetails(workout) // Populate the workout details
+            populateWorkoutDetails(workout)
         }
     }
-    
-    // MARK: - Setup Methods
-    // Set up UI elements like labels, table view, and constraints
+
+    // MARK: - Setup UI
     private func setupUI() {
         view.backgroundColor = .white
         
-        // Title Label
-        titleLabel.font = UIFont.boldSystemFont(ofSize: 24)
+        // Add Background
+        view.addSubview(backgroundImageView)
+        NSLayoutConstraint.activate([
+            backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
+        
+        // Configure Labels
+        titleLabel.font = UIFont.boldSystemFont(ofSize: 28)
         titleLabel.textColor = .black
         titleLabel.textAlignment = .center
         titleLabel.numberOfLines = 0
         
-        // Band Name Label
-        bandNameLabel.font = UIFont.systemFont(ofSize: 18)
-        bandNameLabel.textColor = .gray
+        bandNameLabel.font = UIFont.systemFont(ofSize: 20)
+        bandNameLabel.textColor = .darkGray
         bandNameLabel.textAlignment = .center
         
-        // Genres Label
-        genresLabel.font = UIFont.italicSystemFont(ofSize: 16)
-        genresLabel.textColor = .darkGray
+        genresLabel.font = UIFont.italicSystemFont(ofSize: 18)
+        genresLabel.textColor = .gray
         genresLabel.textAlignment = .center
         
-        // Set up Table View for Sets
+        // Configure Table View
         setsTableView.register(UITableViewCell.self, forCellReuseIdentifier: "setCell")
         setsTableView.dataSource = self
         setsTableView.delegate = self
         setsTableView.translatesAutoresizingMaskIntoConstraints = false
+        setsTableView.backgroundColor = UIColor.white.withAlphaComponent(0.9)
+        setsTableView.layer.cornerRadius = 12
         
-        // Add subviews to the main view
+        // Add Subviews
         view.addSubview(titleLabel)
         view.addSubview(bandNameLabel)
         view.addSubview(genresLabel)
         view.addSubview(setsTableView)
+        view.addSubview(separatorView)
+        view.addSubview(doWorkoutButton)
+        view.addSubview(addToMyWorkoutsButton)
         
-        // Set up Auto Layout constraints
+        // Button Actions
+        addToMyWorkoutsButton.addTarget(self, action: #selector(handleAddOrRemoveWorkout), for: .touchUpInside)
+        doWorkoutButton.addTarget(self, action: #selector(handleDoWorkout), for: .touchUpInside)
+
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         bandNameLabel.translatesAutoresizingMaskIntoConstraints = false
         genresLabel.translatesAutoresizingMaskIntoConstraints = false
-        
+        setsTableView.translatesAutoresizingMaskIntoConstraints = false
+        addToMyWorkoutsButton.translatesAutoresizingMaskIntoConstraints = false
+        separatorView.translatesAutoresizingMaskIntoConstraints = false
+
+        // Set Constraints
         NSLayoutConstraint.activate([
             titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
@@ -82,127 +132,147 @@ class WorkoutDetailsView: UIViewController {
             genresLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             genresLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             
-            setsTableView.topAnchor.constraint(equalTo: genresLabel.bottomAnchor, constant: 20),
-            setsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            setsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            setsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            separatorView.topAnchor.constraint(equalTo: genresLabel.bottomAnchor, constant: 15),
+            separatorView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            separatorView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            separatorView.heightAnchor.constraint(equalToConstant: 1),
+            
+            setsTableView.topAnchor.constraint(equalTo: separatorView.bottomAnchor, constant: 15),
+            setsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+            setsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+            setsTableView.bottomAnchor.constraint(equalTo: doWorkoutButton.topAnchor, constant: -20),
+            
+            doWorkoutButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            doWorkoutButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            doWorkoutButton.heightAnchor.constraint(equalToConstant: 50),
+            doWorkoutButton.bottomAnchor.constraint(equalTo: addToMyWorkoutsButton.topAnchor, constant: -10),
+
+            addToMyWorkoutsButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            addToMyWorkoutsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            addToMyWorkoutsButton.heightAnchor.constraint(equalToConstant: 50),
+            addToMyWorkoutsButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
         ])
     }
-    
-    // MARK: - Navigation Bar Setup
-    // Set up navigation bar with title and actions based on user type
-    private func setupNavigationBar() {
-        navigationItem.title = "Workout Details"
-        
-        // Set up navigation bar button depending on user type
-        if currentUserType == "Star" {
-            let editButton = UIBarButtonItem(title: "Edit", style: .plain, target: self, action: #selector(editWorkout))
-            navigationItem.rightBarButtonItem = editButton
-        } else {
-            let goButton = UIBarButtonItem(title: "Go", style: .plain, target: self, action: #selector(goToDoWorkoutPage))
-            navigationItem.rightBarButtonItem = goButton
-        }
-        
-        let backButton = UIBarButtonItem(title: "Back", style: .plain, target: self, action: #selector(backTapped))
-        navigationItem.leftBarButtonItem = backButton
-    }
-    
-    // MARK: - Fetch Current User Data
-    // Fetch current user type from Firestore (Star or Fan)
+
+    // MARK: - Fetch User Data
     private func fetchCurrentUserData() {
         guard let currentUser = Auth.auth().currentUser else { return }
-        
         let db = Firestore.firestore()
         db.collection("users").document(currentUser.uid).getDocument { [weak self] snapshot, error in
             guard let self = self else { return }
-            
             if let error = error {
                 print("Error fetching user data: \(error.localizedDescription)")
                 return
             }
-            
             if let data = snapshot?.data(), let userType = data["userType"] as? String {
                 self.currentUserType = userType
-            } else {
-                self.currentUserType = "Fan" // Default to "Fan" if no type is found
+                self.addToMyWorkoutsButton.isHidden = (userType != "Fan")
+                self.doWorkoutButton.isHidden = (userType != "Fan")
+                self.updateAddToMyWorkoutsButton()
             }
-            
-            // Update navigation bar after fetching user data
-            self.setupNavigationBar()
         }
     }
-    
+
     // MARK: - Populate Workout Details
-    // Populate the workout details into the UI labels
     private func populateWorkoutDetails(_ workout: Workout) {
         titleLabel.text = workout.title
         bandNameLabel.text = "Band: \(workout.bandName)"
         genresLabel.text = "Genres: \(workout.genres.joined(separator: ", "))"
-        
         sets = workout.sets
-        setsTableView.reloadData() // Reload the table view with workout sets
-    }
-    
-    // MARK: - Actions
-    // Navigate back to the previous screen
-    @objc private func backTapped() {
-        navigationController?.popViewController(animated: true)
-    }
-    
-    // Navigate to the workout edit screen (for Star users)
-    @objc private func editWorkout() {
-        print("Go to edit workout page")
-        let editVC = EditWorkoutViewController()
-        editVC.workout = workout
-        editVC.onWorkoutUpdated = { [weak self] updatedWorkout in
-            self?.workout = updatedWorkout
-            self?.populateWorkoutDetails(updatedWorkout)
-        }
-        navigationController?.pushViewController(editVC, animated: true)
+        setsTableView.reloadData()
+        updateAddToMyWorkoutsButton()
     }
 
-    // Navigate to the Fan page (for Fan users)
-    @objc private func goToDoWorkoutPage() {
+    // MARK: - Update Button State
+    private func updateAddToMyWorkoutsButton() {
+        guard let workoutTitle = workout?.title else { return }
+        print("Checking if workout '\(workoutTitle)' is in MyWorkouts...")
+        
+        DataFetcher.isWorkoutInMyWorkouts(workoutTitle: workoutTitle) { [weak self] isAdded, error in
+            guard let self = self else { return }
+            if let error = error {
+                print("Error checking workout '\(workoutTitle)': \(error.localizedDescription)")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                if isAdded {
+                    print("Workout '\(workoutTitle)' is in MyWorkouts.")
+                    self.addToMyWorkoutsButton.setTitle("Remove from My Workouts", for: .normal)
+                    self.addToMyWorkoutsButton.backgroundColor = UIColor.systemRed
+                } else {
+                    print("Workout '\(workoutTitle)' is NOT in MyWorkouts.")
+                    self.addToMyWorkoutsButton.setTitle("Add to My Workouts", for: .normal)
+                    self.addToMyWorkoutsButton.backgroundColor = UIColor.systemGreen
+                }
+            }
+        }
+    }
+
+    // MARK: - Handle Add/Remove Workout
+    @objc private func handleAddOrRemoveWorkout() {
+        guard let workout = workout else { return }
+        
+        DataFetcher.isWorkoutInMyWorkouts(workoutTitle: workout.title) { [weak self] isAdded, error in
+            guard let self = self else { return }
+            if let error = error {
+                print("Error checking workout in MyWorkouts: \(error.localizedDescription)")
+                return
+            }
+            
+            if isAdded {
+                // Remove workout
+                DataFetcher.removeWorkoutFromMyWorkouts(workoutTitle: workout.title) { error in
+                    if let error = error {
+                        print("Error removing workout: \(error.localizedDescription)")
+                    } else {
+                        DispatchQueue.main.async {
+                            print("Removed workout '\(workout.title)' successfully.")
+                            self.delegate?.didUpdateWorkouts() // Notify delegate
+                            self.navigationController?.popViewController(animated: true)
+                        }
+                    }
+                }
+            } else {
+                // Add workout
+                DataFetcher.addWorkoutToMyWorkouts(workout: workout) { error in
+                    if let error = error {
+                        print("Error adding workout: \(error.localizedDescription)")
+                    } else {
+                        DispatchQueue.main.async {
+                            print("Added workout '\(workout.title)' successfully.")
+                            self.delegate?.didUpdateWorkouts() // Notify delegate
+                            self.navigationController?.popViewController(animated: true)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Handle Do Workout
+    @objc private func handleDoWorkout() {
+        guard let workout = workout else { return }
         let doWorkoutVC = DoWorkoutViewController()
-        doWorkoutVC.workout = workout  // Pass the workout data to DoWorkoutView
+        doWorkoutVC.workout = workout
         navigationController?.pushViewController(doWorkoutVC, animated: true)
     }
-}
 
-// MARK: - UITableViewDataSource & UITableViewDelegate
-// Table view delegate and data source for displaying workout sets and exercises
-extension WorkoutDetailsView: UITableViewDataSource, UITableViewDelegate {
-    
-    // Return the number of rows (sets) in the table
+    // MARK: - TableView DataSource
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return sets.count
     }
-    
-    // Configure each cell with the set details and exercises
+
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let set = sets[indexPath.row]
         let cell = tableView.dequeueReusableCell(withIdentifier: "setCell", for: indexPath)
-        
         var setDetails = "Set \(indexPath.row + 1) - \(set.exercises.count) exercises\n"
-        
-        // Loop through the exercises for the set and format them
         for exercise in set.exercises {
             setDetails += "• \(exercise.name) - x\(exercise.reps)\n"
         }
-        
-        // Set the formatted text to the cell
         cell.textLabel?.text = setDetails
-        cell.textLabel?.font = UIFont.systemFont(ofSize: 16)
-        cell.textLabel?.textColor = .black
         cell.textLabel?.numberOfLines = 0
-        
+        cell.textLabel?.font = UIFont.systemFont(ofSize: 16)
         return cell
-    }
-    
-    // Handle selection of a set cell
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        let set = sets[indexPath.row]
-        print("Selected Set \(indexPath.row + 1) - \(set.exercises.count) exercises")
     }
 }

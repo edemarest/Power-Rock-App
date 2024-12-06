@@ -23,28 +23,66 @@ class WorkoutSet {
             }
         ]
     }
+
+    // Initialize a WorkoutSet from a dictionary fetched from Firestore
+    static func fromDict(_ dict: [String: Any]) -> WorkoutSet? {
+        guard let exercisesArray = dict["exercises"] as? [[String: Any]] else { return nil }
+        let exercises = exercisesArray.compactMap { exerciseDict -> (name: String, reps: Int)? in
+            guard let name = exerciseDict["name"] as? String,
+                  let reps = exerciseDict["reps"] as? Int else { return nil }
+            return (name, reps)
+        }
+        return WorkoutSet(exercises: exercises)
+    }
 }
 
 // MARK: - Workout
-// Struct to represent a workout, including its band name, genres, and sets of exercises
 struct Workout {
     
     // MARK: - Properties
-    // Band name that created the workout
     var bandName: String
-    
-    // List of genres associated with the band
     var genres: [String]
-    
-    // Title of the workout
     var title: String
-    
-    // Difficulty level of the workout (1-5)
     var difficulty: Int
-    
-    // List of sets in the workout, where each set contains exercises
     var sets: [WorkoutSet]
-    
-    // Number of times the workout has been completed
     var timesCompleted: Int = 0 // Default to 0
+    var bandLogoUrl: String? // Optional logo URL for the band
+
+    // MARK: - Methods
+    // Convert the Workout to a dictionary for storing in Firestore
+    func toDict() -> [String: Any] {
+        return [
+            "bandName": bandName,
+            "genres": genres,
+            "title": title,
+            "difficulty": difficulty,
+            "timesCompleted": timesCompleted,
+            "bandLogoUrl": bandLogoUrl ?? "Default_Workout_Image",
+            "sets": sets.map { $0.toDict() }
+        ]
+    }
+
+
+    // Initialize a Workout from a dictionary fetched from Firestore
+    static func fromDict(_ dict: [String: Any]) -> Workout? {
+        guard let bandName = dict["bandName"] as? String,
+              let genres = dict["genres"] as? [String],
+              let title = dict["title"] as? String,
+              let difficulty = dict["difficulty"] as? Int,
+              let timesCompleted = dict["timesCompleted"] as? Int,
+              let setsArray = dict["sets"] as? [[String: Any]] else { return nil }
+
+        let sets = setsArray.compactMap { WorkoutSet.fromDict($0) }
+        let bandLogoUrl = dict["bandLogoUrl"] as? String
+
+        return Workout(
+            bandName: bandName,
+            genres: genres,
+            title: title,
+            difficulty: difficulty,
+            sets: sets,
+            timesCompleted: timesCompleted,
+            bandLogoUrl: bandLogoUrl
+        )
+    }
 }

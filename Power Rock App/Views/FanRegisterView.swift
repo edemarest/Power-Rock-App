@@ -19,7 +19,6 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
         setupFanRegisterView()
     }
 
-    // Set up the navigation bar
     private func setupNavbar() {
         let appearance = UINavigationBarAppearance()
         appearance.backgroundColor = UIColor.black.withAlphaComponent(0.8)
@@ -29,7 +28,6 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
         navigationController?.navigationBar.tintColor = .white
     }
 
-    // Set up the background
     private func setupBackground() {
         let baseView = UIView()
         baseView.backgroundColor = .black
@@ -55,7 +53,6 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
         ])
     }
 
-    // Set up the Fan registration view
     private func setupFanRegisterView() {
         let fanRegisterView = FanRegisterView()
         fanRegisterView.delegate = self
@@ -70,18 +67,17 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
         ])
     }
 
-    // Handle back button tap
     func didTapFanBackButton() {
         navigationController?.popViewController(animated: true)
     }
 
-    // Handle register button tap
     func didTapFanRegisterButton(firstName: String, email: String, password: String, genres: [String]) {
         Auth.auth().createUser(withEmail: email, password: password) { [weak self] authResult, error in
             guard let self = self else { return }
 
             if let error = error {
                 self.showAlert(message: "Registration failed. Please try again.")
+                print("Error: \(error.localizedDescription)")
                 return
             }
 
@@ -94,31 +90,30 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
         }
     }
 
-    // Save user data
     private func saveUserData(uid: String, firstName: String, genres: [String]) {
-        let userData: [String: Any] = [
-            "userType": "Fan",
-            "firstName": firstName,
-            "genres": genres
-        ]
-
-        Firestore.firestore().collection("users").document(uid).setData(userData) { error in
+        DataFetcher.saveUserData(uid: uid, firstName: firstName, genres: genres) { [weak self] error in
             if let error = error {
-                self.showAlert(message: "Failed to save user data. Please try again.")
+                self?.showAlert(message: "Failed to save user data. Please try again.")
+                print("Error saving user data: \(error.localizedDescription)")
                 return
             }
-            self.navigateToFanHome()
+
+            // Add initial workouts to MyWorkouts
+            DataFetcher.addInitialWorkoutsToMyWorkouts(uid: uid, genres: genres) { error in
+                if let error = error {
+                    print("Error adding initial workouts: \(error.localizedDescription)")
+                }
+                self?.navigateToFanHome()
+            }
         }
     }
 
-    // Show alert
     private func showAlert(message: String) {
         let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
 
-    // Navigate to home screen
     private func navigateToFanHome() {
         let fanHomeVC = FanHomeViewController()
         navigationController?.pushViewController(fanHomeVC, animated: true)

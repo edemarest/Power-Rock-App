@@ -3,18 +3,19 @@ import FirebaseAuth
 import FirebaseFirestore
 
 // MARK: - FanHomeViewDelegate Protocol
-// Protocol to handle the tap on a workout cell
 protocol FanHomeViewDelegate: AnyObject {
     func didTapWorkoutCell(with workout: Workout)
 }
 
 // MARK: - FanHomeViewController
-class FanHomeViewController: UIViewController, FanHomeViewDelegate, SearchWorkoutViewDelegate {
+class FanHomeViewController: UIViewController, FanHomeViewDelegate, SearchWorkoutViewDelegate, WorkoutDetailsDelegate {
 
     // MARK: - Properties
     var totalPower: Int = 0
     var fanGenres: [String] = []
     var workouts: [Workout] = []
+
+    private var fanHomeView: FanHomeView? // Reference to the FanHomeView
 
     // MARK: - View Lifecycle
     override func viewDidLoad() {
@@ -23,18 +24,27 @@ class FanHomeViewController: UIViewController, FanHomeViewDelegate, SearchWorkou
         setupNavigationBar()
         setupFanHomeView()
         fetchUserGenres()
-        fetchWorkouts()
+        fetchUserWorkouts()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.navigationBar.isTranslucent = false
+        navigationController?.navigationBar.barTintColor = .black
     }
 
     // MARK: - Navigation Bar Setup
     private func setupNavigationBar() {
+        // Set background color and text attributes
         navigationController?.navigationBar.barTintColor = .black
         navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
 
+        // Configure Logout Button
         let logoutButton = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(didTapLogout))
         logoutButton.tintColor = .white
         navigationItem.leftBarButtonItem = logoutButton
 
+        // Configure Browse Button
         let browseButton = UIBarButtonItem(title: "Browse", style: .plain, target: self, action: #selector(didTapBrowse))
         browseButton.tintColor = .white
         navigationItem.rightBarButtonItem = browseButton
@@ -44,13 +54,20 @@ class FanHomeViewController: UIViewController, FanHomeViewDelegate, SearchWorkou
     func didTapWorkoutCell(with workout: Workout) {
         let workoutDetailsVC = WorkoutDetailsView()
         workoutDetailsVC.workout = workout
+        workoutDetailsVC.delegate = self // Set delegate
         navigationController?.pushViewController(workoutDetailsVC, animated: true)
+    }
+
+    // MARK: - WorkoutDetailsDelegate Method
+    func didUpdateWorkouts() {
+        print("Workout list updated in WorkoutDetails. Refreshing home view...")
+        fetchUserWorkouts() // Refresh workouts after changes
     }
 
     // MARK: - SearchWorkoutViewDelegate Methods
     func updateFilteredWorkouts(with workouts: [Workout]) {
-        self.workouts = workouts
-        setupFanHomeView()
+        print("Updated workouts from SearchWorkoutView. Refreshing MyWorkouts...")
+        fetchUserWorkouts() // Fetch updated MyWorkouts list
     }
 
     // MARK: - Actions
@@ -62,7 +79,7 @@ class FanHomeViewController: UIViewController, FanHomeViewDelegate, SearchWorkou
     @objc private func didTapBrowse() {
         let searchWorkoutVC = SearchWorkoutView()
         searchWorkoutVC.workouts = workouts
-        searchWorkoutVC.delegate = self
+        searchWorkoutVC.delegate = self // Set delegate for updates
         navigationController?.pushViewController(searchWorkoutVC, animated: true)
     }
 
@@ -73,72 +90,42 @@ class FanHomeViewController: UIViewController, FanHomeViewDelegate, SearchWorkou
 
     // MARK: - Fetching Data
     private func fetchUserGenres() {
-        guard let user = Auth.auth().currentUser else { return }
-
-        let db = Firestore.firestore()
-        db.collection("users").document(user.uid).getDocument { [weak self] snapshot, error in
+        DataFetcher.fetchUserGenres { [weak self] genres, error in
             guard let self = self else { return }
             if let error = error {
-                print("Error fetching user details: \(error.localizedDescription)")
+                print("Error fetching user genres: \(error.localizedDescription)")
                 return
             }
-
-            if let data = snapshot?.data(),
-               let genres = data["genres"] as? [String] {
-                self.fanGenres = genres
-                self.fetchWorkouts()
-            }
+            self.fanGenres = genres ?? []
         }
     }
 
-    private func fetchWorkouts() {
-        let db = Firestore.firestore()
-        db.collection("workouts").getDocuments { [weak self] snapshot, error in
+    private func fetchUserWorkouts() {
+        print("Fetching updated MyWorkouts...")
+        
+        DataFetcher.fetchMyWorkouts { [weak self] workouts, error in
             guard let self = self else { return }
-
             if let error = error {
-                print("Error fetching workouts: \(error.localizedDescription)")
+                print("Error fetching MyWorkouts: \(error.localizedDescription)")
                 return
             }
-
-            var allWorkouts: [Workout] = []
-            for document in snapshot!.documents {
-                let data = document.data()
-
-                if let bandName = data["bandName"] as? String,
-                   let genres = data["genres"] as? [String],
-                   let title = data["title"] as? String,
-                   let difficulty = data["difficulty"] as? Int,
-                   let setsData = data["sets"] as? [[String: Any]] {
-
-                    var sets: [WorkoutSet] = []
-                    for setData in setsData {
-                        if let exercisesData = setData["exercises"] as? [[String: Any]] {
-                            var exercises: [(name: String, reps: Int)] = []
-                            for exerciseData in exercisesData {
-                                if let name = exerciseData["name"] as? String,
-                                   let reps = exerciseData["reps"] as? Int {
-                                    exercises.append((name: name, reps: reps))
-                                }
-                            }
-                            let workoutSet = WorkoutSet(exercises: exercises)
-                            sets.append(workoutSet)
-                        }
-                    }
-
-                    let workout = Workout(bandName: bandName, genres: genres, title: title, difficulty: difficulty, sets: sets)
-                    allWorkouts.append(workout)
-                }
+            
+            self.workouts = workouts ?? []
+            print("Fetched MyWorkouts:")
+            for workout in self.workouts {
+                print("- \(workout.title)")
             }
-
-            self.workouts = allWorkouts
-            self.setupFanHomeView()
+            
+            DispatchQueue.main.async {
+                self.refreshFanHomeView()
+            }
         }
     }
 
     // MARK: - Setup Fan Home View
     private func setupFanHomeView() {
         let fanHomeView = FanHomeView()
+        self.fanHomeView = fanHomeView // Keep a reference to update dynamically
         fanHomeView.delegate = self
         fanHomeView.totalPower = totalPower
         fanHomeView.workoutObjects = workouts
@@ -152,6 +139,12 @@ class FanHomeViewController: UIViewController, FanHomeViewDelegate, SearchWorkou
             fanHomeView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
     }
+
+    private func refreshFanHomeView() {
+        guard let fanHomeView = fanHomeView else { return }
+        print("Refreshing FanHomeView with updated workouts...")
+        fanHomeView.updateWorkouts(workouts)
+    }
 }
 
 // MARK: - FanHomeView
@@ -164,9 +157,15 @@ class FanHomeView: UIView, UITableViewDataSource, UITableViewDelegate {
     private let totalPowerBox = UIView()
     private let totalPowerLabel = UILabel()
     private let backgroundImageView = UIImageView()
+    private let workoutsDescriptionLabel = UILabel() // New label for description
 
     var totalPower: Int = 0
     var workoutObjects: [Workout] = []
+
+    // Expose tableView as a computed property
+    public var workoutTableView: UITableView {
+        return tableView
+    }
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -180,6 +179,11 @@ class FanHomeView: UIView, UITableViewDataSource, UITableViewDelegate {
         setupUI()
         setupConstraints()
     }
+    
+    func updateWorkouts(_ workouts: [Workout]) {
+        self.workoutObjects = workouts
+        tableView.reloadData()
+    }
 
     // MARK: - UI Setup
     private func setupUI() {
@@ -187,11 +191,22 @@ class FanHomeView: UIView, UITableViewDataSource, UITableViewDelegate {
 
         // Add background image
         backgroundImageView.image = UIImage(named: "Background_2")
-        backgroundImageView.alpha = 0.6 // Increased opacity
+        backgroundImageView.alpha = 0.4 // Increased opacity
         backgroundImageView.contentMode = .scaleAspectFill
         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(backgroundImageView)
         sendSubviewToBack(backgroundImageView)
+
+        // Configure description label
+        UIHelper.configureLabel(
+            workoutsDescriptionLabel,
+            text: "Your workouts home is a collection of workouts of your favorite genre! Feel free to remove any or browse and add more!",
+            font: UIFont.systemFont(ofSize: 14),
+            textColor: .white
+        )
+        workoutsDescriptionLabel.numberOfLines = 0
+        workoutsDescriptionLabel.textAlignment = .center
+        addSubview(workoutsDescriptionLabel)
 
         // Configure total power box
         totalPowerBox.backgroundColor = UIColor(white: 0.1, alpha: 0.9)
@@ -200,6 +215,8 @@ class FanHomeView: UIView, UITableViewDataSource, UITableViewDelegate {
         addSubview(totalPowerBox)
 
         // Configure total power label
+        totalPowerBox.backgroundColor = UIColor.orange
+        // Update total power label styling
         UIHelper.configureLabel(
             totalPowerLabel,
             text: "Total Power 🔥: \(totalPower)",
@@ -225,6 +242,7 @@ class FanHomeView: UIView, UITableViewDataSource, UITableViewDelegate {
     // MARK: - Constraints Setup
     private func setupConstraints() {
         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
+        workoutsDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
         tableView.translatesAutoresizingMaskIntoConstraints = false
         totalPowerBox.translatesAutoresizingMaskIntoConstraints = false
         totalPowerLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -236,8 +254,13 @@ class FanHomeView: UIView, UITableViewDataSource, UITableViewDelegate {
             backgroundImageView.leadingAnchor.constraint(equalTo: leadingAnchor),
             backgroundImageView.trailingAnchor.constraint(equalTo: trailingAnchor),
 
+            // Workouts description label
+            workoutsDescriptionLabel.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 8),
+            workoutsDescriptionLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            workoutsDescriptionLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+
             // Table view
-            tableView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
+            tableView.topAnchor.constraint(equalTo: workoutsDescriptionLabel.bottomAnchor, constant: 8),
             tableView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             tableView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
             tableView.bottomAnchor.constraint(equalTo: totalPowerBox.topAnchor, constant: -16),
