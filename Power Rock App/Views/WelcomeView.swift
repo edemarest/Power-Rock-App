@@ -258,13 +258,6 @@ class WelcomeView: UIView {
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        debugSubviews()
-    }
-    
-    func debugSubviews() {
-        for subview in subviews {
-            print("DEBUG: Subview \(subview) - Frame: \(subview.frame) - User Interaction: \(subview.isUserInteractionEnabled)")
-        }
     }
 
     @objc private func didTapFan() {

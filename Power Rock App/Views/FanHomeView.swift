@@ -214,7 +214,7 @@ class FanHomeView: UIView, UITableViewDataSource, UITableViewDelegate {
         tableView.dataSource = self
         tableView.delegate = self
         UIHelper.configureTableView(tableView)
-        tableView.backgroundColor = UIColor.black.withAlphaComponent(0.8)
+        tableView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         tableView.layer.cornerRadius = 12
         tableView.layer.borderColor = UIColor.black.cgColor
         tableView.layer.borderWidth = 1.5
