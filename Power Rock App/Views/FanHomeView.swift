@@ -9,8 +9,7 @@ protocol FanHomeViewDelegate: AnyObject {
 }
 
 // MARK: - FanHomeViewController
-// ViewController for managing the home screen of a fan user, displaying workouts and user details
-class FanHomeViewController: UIViewController, FanHomeViewDelegate {
+class FanHomeViewController: UIViewController, FanHomeViewDelegate, SearchWorkoutViewDelegate {
 
     // MARK: - Properties
     var totalPower: Int = 0
@@ -18,48 +17,40 @@ class FanHomeViewController: UIViewController, FanHomeViewDelegate {
     var workouts: [Workout] = []
 
     // MARK: - View Lifecycle
-    // Setup navigation, layout, and fetch necessary data when the view is loaded
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.title = "Home"
+        self.title = "My Workouts"
+        setupNavigationBar()
         setupFanHomeView()
-        navigationItem.hidesBackButton = true
-
-        let logoutButton = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(didTapLogout))
-        navigationItem.leftBarButtonItem = logoutButton
-
-        let browseButton = UIBarButtonItem(title: "Browse", style: .plain, target: self, action: #selector(didTapBrowse))
-        navigationItem.rightBarButtonItem = browseButton
-
         fetchUserGenres()
         fetchWorkouts()
     }
 
-    // MARK: - Setup Methods
-    // Set up the FanHome view with necessary data
-    private func setupFanHomeView() {
-        let fanHomeView = FanHomeView()
-        fanHomeView.delegate = self
-        fanHomeView.totalPower = totalPower
-        fanHomeView.workoutObjects = workouts
-        fanHomeView.fanGenres = fanGenres
-        fanHomeView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(fanHomeView)
+    // MARK: - Navigation Bar Setup
+    private func setupNavigationBar() {
+        navigationController?.navigationBar.barTintColor = .black
+        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
 
-        NSLayoutConstraint.activate([
-            fanHomeView.topAnchor.constraint(equalTo: view.topAnchor),
-            fanHomeView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            fanHomeView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            fanHomeView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
-        ])
+        let logoutButton = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(didTapLogout))
+        logoutButton.tintColor = .white
+        navigationItem.leftBarButtonItem = logoutButton
+
+        let browseButton = UIBarButtonItem(title: "Browse", style: .plain, target: self, action: #selector(didTapBrowse))
+        browseButton.tintColor = .white
+        navigationItem.rightBarButtonItem = browseButton
     }
 
     // MARK: - FanHomeViewDelegate Methods
-    // Handle workout selection and navigate to the WorkoutDetails screen
     func didTapWorkoutCell(with workout: Workout) {
         let workoutDetailsVC = WorkoutDetailsView()
         workoutDetailsVC.workout = workout
         navigationController?.pushViewController(workoutDetailsVC, animated: true)
+    }
+
+    // MARK: - SearchWorkoutViewDelegate Methods
+    func updateFilteredWorkouts(with workouts: [Workout]) {
+        self.workouts = workouts
+        setupFanHomeView()
     }
 
     // MARK: - Actions
@@ -69,7 +60,10 @@ class FanHomeViewController: UIViewController, FanHomeViewDelegate {
     }
 
     @objc private func didTapBrowse() {
-        print("Browse button tapped - Placeholder action")
+        let searchWorkoutVC = SearchWorkoutView()
+        searchWorkoutVC.workouts = workouts
+        searchWorkoutVC.delegate = self
+        navigationController?.pushViewController(searchWorkoutVC, animated: true)
     }
 
     private func navigateToWelcomeView() {
@@ -77,8 +71,7 @@ class FanHomeViewController: UIViewController, FanHomeViewDelegate {
         navigationController?.pushViewController(welcomeVC, animated: true)
     }
 
-    // MARK: - Fetching User Genres and Workouts
-    // Fetch user genres from Firestore and then fetch the corresponding workouts
+    // MARK: - Fetching Data
     private func fetchUserGenres() {
         guard let user = Auth.auth().currentUser else { return }
 
@@ -98,18 +91,17 @@ class FanHomeViewController: UIViewController, FanHomeViewDelegate {
         }
     }
 
-    // Fetch workouts from Firestore and filter based on user genres
     private func fetchWorkouts() {
         let db = Firestore.firestore()
         db.collection("workouts").getDocuments { [weak self] snapshot, error in
             guard let self = self else { return }
-            
+
             if let error = error {
                 print("Error fetching workouts: \(error.localizedDescription)")
                 return
             }
 
-            var filteredWorkouts: [Workout] = []
+            var allWorkouts: [Workout] = []
             for document in snapshot!.documents {
                 let data = document.data()
 
@@ -135,18 +127,30 @@ class FanHomeViewController: UIViewController, FanHomeViewDelegate {
                     }
 
                     let workout = Workout(bandName: bandName, genres: genres, title: title, difficulty: difficulty, sets: sets)
-                    let fanGenresSet = Set(self.fanGenres)
-                    let workoutGenresSet = Set(genres)
-
-                    if !fanGenresSet.isDisjoint(with: workoutGenresSet) {
-                        filteredWorkouts.append(workout)
-                    }
+                    allWorkouts.append(workout)
                 }
             }
 
-            self.workouts = filteredWorkouts
+            self.workouts = allWorkouts
             self.setupFanHomeView()
         }
+    }
+
+    // MARK: - Setup Fan Home View
+    private func setupFanHomeView() {
+        let fanHomeView = FanHomeView()
+        fanHomeView.delegate = self
+        fanHomeView.totalPower = totalPower
+        fanHomeView.workoutObjects = workouts
+        fanHomeView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(fanHomeView)
+
+        NSLayoutConstraint.activate([
+            fanHomeView.topAnchor.constraint(equalTo: view.topAnchor),
+            fanHomeView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            fanHomeView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            fanHomeView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
     }
 }
 
@@ -156,14 +160,13 @@ class FanHomeView: UIView, UITableViewDataSource, UITableViewDelegate {
 
     weak var delegate: FanHomeViewDelegate?
 
-    let tableView = UITableView()
+    private let tableView = UITableView()
     private let totalPowerBox = UIView()
     private let totalPowerLabel = UILabel()
-    private let genresLabel = UILabel()
+    private let backgroundImageView = UIImageView()
 
     var totalPower: Int = 0
     var workoutObjects: [Workout] = []
-    var fanGenres: [String] = []
 
     // MARK: - Initializer
     override init(frame: CGRect) {
@@ -180,59 +183,78 @@ class FanHomeView: UIView, UITableViewDataSource, UITableViewDelegate {
 
     // MARK: - UI Setup
     private func setupUI() {
-        backgroundColor = .white
+        backgroundColor = .black // Darker background color
 
-        tableView.register(WorkoutTableViewCell.self, forCellReuseIdentifier: "workoutCell")
-        tableView.dataSource = self
-        tableView.delegate = self
-        addSubview(tableView)
+        // Add background image
+        backgroundImageView.image = UIImage(named: "Background_2")
+        backgroundImageView.alpha = 0.6 // Increased opacity
+        backgroundImageView.contentMode = .scaleAspectFill
+        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(backgroundImageView)
+        sendSubviewToBack(backgroundImageView)
 
-        totalPowerBox.backgroundColor = .lightGray
+        // Configure total power box
+        totalPowerBox.backgroundColor = UIColor(white: 0.1, alpha: 0.9)
         totalPowerBox.layer.cornerRadius = 10
         totalPowerBox.clipsToBounds = true
         addSubview(totalPowerBox)
 
-        totalPowerLabel.text = "Total Power 🔥: \(totalPower)"
-        totalPowerLabel.font = UIFont.boldSystemFont(ofSize: 18)
+        // Configure total power label
+        UIHelper.configureLabel(
+            totalPowerLabel,
+            text: "Total Power 🔥: \(totalPower)",
+            font: UIFont.boldSystemFont(ofSize: 18),
+            textColor: .white
+        )
         totalPowerLabel.textAlignment = .center
         totalPowerBox.addSubview(totalPowerLabel)
 
-        genresLabel.text = "Showing workouts for your favorite genres: \(fanGenres.joined(separator: ", "))"
-        genresLabel.font = UIFont.systemFont(ofSize: 16)
-        genresLabel.textAlignment = .center
-        genresLabel.numberOfLines = 0
-        genresLabel.textColor = .darkGray
-        addSubview(genresLabel)
+        // Configure table view
+        tableView.register(WorkoutTableViewCell.self, forCellReuseIdentifier: "workoutCell")
+        tableView.dataSource = self
+        tableView.delegate = self
+        UIHelper.configureTableView(tableView)
+        tableView.backgroundColor = UIColor.black.withAlphaComponent(0.8)
+        tableView.layer.cornerRadius = 12
+        tableView.layer.borderColor = UIColor.black.cgColor
+        tableView.layer.borderWidth = 1.5
+        tableView.separatorStyle = .none
+        addSubview(tableView)
     }
 
-    // MARK: - Constraints
+    // MARK: - Constraints Setup
     private func setupConstraints() {
+        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
         tableView.translatesAutoresizingMaskIntoConstraints = false
         totalPowerBox.translatesAutoresizingMaskIntoConstraints = false
         totalPowerLabel.translatesAutoresizingMaskIntoConstraints = false
-        genresLabel.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            genresLabel.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 16),
-            genresLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            genresLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            // Background image
+            backgroundImageView.topAnchor.constraint(equalTo: topAnchor),
+            backgroundImageView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            backgroundImageView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            backgroundImageView.trailingAnchor.constraint(equalTo: trailingAnchor),
 
-            tableView.topAnchor.constraint(equalTo: genresLabel.bottomAnchor, constant: 20),
-            tableView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: totalPowerBox.topAnchor, constant: -20),
+            // Table view
+            tableView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            tableView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+            tableView.bottomAnchor.constraint(equalTo: totalPowerBox.topAnchor, constant: -16),
 
+            // Total power box
             totalPowerBox.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             totalPowerBox.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
             totalPowerBox.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor, constant: -20),
             totalPowerBox.heightAnchor.constraint(equalToConstant: 60),
 
+            // Total power label
             totalPowerLabel.centerXAnchor.constraint(equalTo: totalPowerBox.centerXAnchor),
             totalPowerLabel.centerYAnchor.constraint(equalTo: totalPowerBox.centerYAnchor)
         ])
     }
 
-    // MARK: - UITableViewDataSource Methods
+    // MARK: - UITableViewDataSource, UITableViewDelegate
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return workoutObjects.count
     }
@@ -244,7 +266,6 @@ class FanHomeView: UIView, UITableViewDataSource, UITableViewDelegate {
         return cell
     }
 
-    // MARK: - UITableViewDelegate Methods
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let selectedWorkout = workoutObjects[indexPath.row]

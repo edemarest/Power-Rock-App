@@ -15,8 +15,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
 
+        print("DEBUG: Setting up initial scene.")
         let window = UIWindow(windowScene: windowScene)
-        let mainVC = MainVC() // Your initial VC
+        let mainVC = MainVC()
         let navigationController = UINavigationController(rootViewController: mainVC)
         window.rootViewController = navigationController
         self.window = window

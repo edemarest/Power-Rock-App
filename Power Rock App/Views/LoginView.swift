@@ -10,28 +10,21 @@ protocol LoginViewDelegate: AnyObject {
 }
 
 // MARK: - LoginViewController
-// ViewController for handling login functionality and navigating based on user type
 class LoginViewController: UIViewController, LoginViewDelegate {
 
     let db = Firestore.firestore()
 
-    // MARK: - Properties
-    var userTitle: String?
-
-    // MARK: - View Lifecycle
-    // Set up view elements and navigation when the view is loaded
     override func viewDidLoad() {
         super.viewDidLoad()
         self.title = "Login"
         setupLoginView()
-        navigationItem.hidesBackButton = true
+        setupBackground()
 
+        navigationItem.hidesBackButton = true
         let backButton = UIBarButtonItem(title: "Back", style: .plain, target: self, action: #selector(didTapLoginBackButton))
         navigationItem.leftBarButtonItem = backButton
     }
 
-    // MARK: - Setup Methods
-    // Set up the login view and add it to the view hierarchy
     private func setupLoginView() {
         let loginView = LoginView()
         loginView.delegate = self
@@ -46,14 +39,34 @@ class LoginViewController: UIViewController, LoginViewDelegate {
         ])
     }
 
-    // MARK: - LoginViewDelegate Methods
-    // Handle the back button tap
-    @objc func didTapLoginBackButton() {
-        let welcomeVC = WelcomeViewController()
-        navigationController?.pushViewController(welcomeVC, animated: true)
+    private func setupBackground() {
+        let backgroundImageView = UIImageView(image: UIImage(named: "Welcome_Background"))
+        backgroundImageView.contentMode = .scaleAspectFill
+        backgroundImageView.alpha = 0.6
+        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
+        view.insertSubview(backgroundImageView, at: 0)
+
+        NSLayoutConstraint.activate([
+            backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
     }
 
-    // Handle the login button tap, perform authentication and navigate accordingly
+    @objc func didTapLoginBackButton() {
+        if let navigationController = navigationController {
+            if let rootVC = navigationController.viewControllers.first as? WelcomeViewController {
+                navigationController.popToRootViewController(animated: true)
+            } else {
+                let welcomeVC = WelcomeViewController()
+                navigationController.setViewControllers([welcomeVC], animated: false)
+            }
+        } else {
+            dismiss(animated: true, completion: nil)
+        }
+    }
+
     func didTapLoginButton(email: String, password: String) {
         guard !email.isEmpty, !password.isEmpty else {
             showAlert(message: "Please fill in both fields.")
@@ -88,12 +101,6 @@ class LoginViewController: UIViewController, LoginViewDelegate {
                     return
                 }
 
-                if userType == "Star", let bandName = data["bandName"] as? String {
-                    self.userTitle = bandName
-                } else if let firstName = data["firstName"] as? String {
-                    self.userTitle = firstName
-                }
-
                 self.dismiss(animated: true) {
                     if userType == "Fan" {
                         self.navigateToFanHome()
@@ -108,21 +115,16 @@ class LoginViewController: UIViewController, LoginViewDelegate {
         }
     }
 
-    // MARK: - Navigation Methods
-    // Navigate to the Fan home screen
     private func navigateToFanHome() {
         let fanVC = FanHomeViewController()
         navigationController?.pushViewController(fanVC, animated: true)
     }
 
-    // Navigate to the Star home screen
     private func navigateToStarHome() {
         let starHomeVC = StarHomeViewController()
         navigationController?.pushViewController(starHomeVC, animated: true)
     }
 
-    // MARK: - Helper Methods
-    // Display an alert with a message
     private func showAlert(message: String) {
         let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
@@ -143,6 +145,7 @@ class LoginView: UIView {
     private let passwordLabel = UILabel()
     private let passwordTextField = UITextField()
     private let loginButton = UIButton(type: .system)
+    private let noteLabel = UILabel()
 
     // MARK: - Initialization
     override init(frame: CGRect) {
@@ -161,35 +164,61 @@ class LoginView: UIView {
 
     // MARK: - Setup UI
     private func setupUI() {
-        backgroundColor = .white
+        backgroundColor = .clear
         
-        // Email Label and TextField
-        emailLabel.text = "Enter your email:"
-        emailLabel.font = UIFont.systemFont(ofSize: 16)
+        // Email Label
+        UIHelper.configureLabel(
+            emailLabel,
+            text: "Enter your email:",
+            font: UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16)
+        )
         addSubview(emailLabel)
         
-        emailTextField.placeholder = "Email"
-        emailTextField.borderStyle = .roundedRect
-        emailTextField.keyboardType = .emailAddress
-        emailTextField.autocapitalizationType = .none
+        // Email TextField
+        UIHelper.configureTextField(
+            emailTextField,
+            placeholder: "Email",
+            font: UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16)
+        )
         addSubview(emailTextField)
         
-        // Password Label and TextField
-        passwordLabel.text = "Enter your password:"
-        passwordLabel.font = UIFont.systemFont(ofSize: 16)
+        // Password Label
+        UIHelper.configureLabel(
+            passwordLabel,
+            text: "Enter your password:",
+            font: UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16)
+        )
         addSubview(passwordLabel)
         
-        passwordTextField.placeholder = "Password"
-        passwordTextField.borderStyle = .roundedRect
+        // Password TextField
+        UIHelper.configureTextField(
+            passwordTextField,
+            placeholder: "Password",
+            font: UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16)
+        )
         passwordTextField.isSecureTextEntry = true
         addSubview(passwordTextField)
         
         // Login Button
-        loginButton.setTitle("Login", for: .normal)
-        loginButton.setTitleColor(.white, for: .normal)
-        loginButton.backgroundColor = .systemBlue
-        loginButton.layer.cornerRadius = 10
+        UIHelper.configureButton(
+            loginButton,
+            title: "Login",
+            font: UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16),
+            backgroundColor: .white,
+            textColor: .black
+        )
         addSubview(loginButton)
+
+        // Note Label
+        UIHelper.configureLabel(
+            noteLabel,
+            text: "Authentication for both user types Fan and Star only requires your email address and password, nothing else.",
+            font: UIFont.systemFont(ofSize: 12),
+            textColor: .white
+        )
+        noteLabel.numberOfLines = 0
+        noteLabel.textAlignment = .center
+        addSubview(noteLabel)
     }
 
     // MARK: - Setup Constraints
@@ -201,7 +230,8 @@ class LoginView: UIView {
         passwordLabel.translatesAutoresizingMaskIntoConstraints = false
         passwordTextField.translatesAutoresizingMaskIntoConstraints = false
         loginButton.translatesAutoresizingMaskIntoConstraints = false
-        
+        noteLabel.translatesAutoresizingMaskIntoConstraints = false
+
         NSLayoutConstraint.activate([
             // Email Section
             emailLabel.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 40),
@@ -225,7 +255,12 @@ class LoginView: UIView {
             loginButton.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 30),
             loginButton.centerXAnchor.constraint(equalTo: centerXAnchor),
             loginButton.widthAnchor.constraint(equalToConstant: 150),
-            loginButton.heightAnchor.constraint(equalToConstant: 50)
+            loginButton.heightAnchor.constraint(equalToConstant: 50),
+            
+            // Note Label
+            noteLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: padding),
+            noteLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -padding),
+            noteLabel.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor, constant: -20)
         ])
     }
 
@@ -235,7 +270,6 @@ class LoginView: UIView {
     }
 
     // MARK: - Actions
-    // Handle the login button tap
     @objc private func didTapLogin() {
         guard let email = emailTextField.text, !email.isEmpty,
               let password = passwordTextField.text, !password.isEmpty else {

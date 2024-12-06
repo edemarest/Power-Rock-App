@@ -6,83 +6,88 @@ import FirebaseFirestore
 // View controller for handling the main flow, checking authentication, and navigating based on user type
 class MainVC: UIViewController {
 
-    // MARK: - Properties
-    let db = Firestore.firestore() // Firestore instance for fetching user data
-    var userTitle: String? // User's title (Band name for Stars, First name for Fans)
+    let db = Firestore.firestore()
+    var userTitle: String?
+    private var isAuthenticating = false
 
-    // MARK: - View Lifecycle
-    // Check authentication status when the view loads
     override func viewDidLoad() {
         super.viewDidLoad()
-        checkAuthentication() // Check if the user is authenticated
+        checkAuthentication()
     }
 
-    // MARK: - Methods
-    // Check if a user is logged in and fetch user details
     private func checkAuthentication() {
+        guard !isAuthenticating else {
+            print("DEBUG: Already authenticating, skipping.")
+            return
+        }
+        isAuthenticating = true
+
         if let user = Auth.auth().currentUser {
-            fetchUserDetails(for: user.uid) // Fetch user details if logged in
+            print("DEBUG: User authenticated, fetching details.")
+            fetchUserDetails(for: user.uid)
         } else {
-            navigateToWelcomeScreen() // Navigate to welcome screen if not authenticated
+            print("DEBUG: No authenticated user, setting WelcomeViewController as root.")
+            setWelcomeAsRoot()
         }
+        isAuthenticating = false
     }
 
-    // Navigate to the welcome screen if the user is not authenticated
-    func navigateToWelcomeScreen() {
-        let welcomeVC = WelcomeViewController() // The welcome screen for new users
-        if let navigationController = navigationController {
-            navigationController.setViewControllers([welcomeVC], animated: true)
-        } else {
-            let navigationController = UINavigationController(rootViewController: welcomeVC)
-            navigationController.modalPresentationStyle = .fullScreen
-            present(navigationController, animated: true)
+    private func setWelcomeAsRoot() {
+        print("DEBUG: Setting WelcomeViewController as the root view controller.")
+        DispatchQueue.main.async {
+            let welcomeVC = WelcomeViewController()
+            if let navigationController = self.navigationController {
+                if !(navigationController.viewControllers.first is WelcomeViewController) {
+                    print("DEBUG: NavigationController exists, resetting stack to WelcomeViewController.")
+                    navigationController.setViewControllers([welcomeVC], animated: false)
+                }
+            } else {
+                print("DEBUG: No NavigationController found, creating a new one with WelcomeViewController.")
+                let navController = UINavigationController(rootViewController: welcomeVC)
+                navController.modalPresentationStyle = .fullScreen
+                self.view.window?.rootViewController = navController
+                self.view.window?.makeKeyAndVisible()
+            }
         }
     }
-
-    // Fetch user details from Firestore using the user ID
+    
     private func fetchUserDetails(for uid: String) {
         db.collection("users").document(uid).getDocument { [weak self] snapshot, error in
             guard let self = self else { return }
-            
-            // Handle error in fetching user details
             if let error = error {
                 print("Error fetching user details: \(error.localizedDescription)")
-                self.navigateToWelcomeScreen() // Navigate to the welcome screen if an error occurs
+                self.setWelcomeAsRoot()
                 return
             }
 
-            // Process user data
             guard let data = snapshot?.data(),
                   let userType = data["userType"] as? String else {
-                print("Invalid user data.")
-                self.navigateToWelcomeScreen() // Navigate to welcome screen if data is invalid
+                self.setWelcomeAsRoot()
                 return
             }
 
-            // Set the user title based on user type (Band name for Star, First name for Fan)
             self.userTitle = userType == "Star" ? data["bandName"] as? String : data["firstName"] as? String
-            self.navigateBasedOnUserType(userType) // Navigate based on user type
+            self.navigateBasedOnUserType(userType)
         }
     }
 
-    // Navigate to the correct screen based on user type
     private func navigateBasedOnUserType(_ userType: String) {
         if userType == "Star" {
-            navigateToStarHomeView() // Navigate to Star home if user is a Star
+            navigateToStarHomeView()
         } else {
-            navigateToFanHomeView() // Navigate to Fan home if user is a Fan
+            navigateToFanHomeView()
         }
     }
 
-    // Navigate to the Fan home screen
     private func navigateToFanHomeView() {
         let fanHomeViewController = FanHomeViewController()
         navigationController?.pushViewController(fanHomeViewController, animated: true)
     }
 
-    // Navigate to the Star home screen
     private func navigateToStarHomeView() {
         let starHomeVC = StarHomeViewController()
         navigationController?.pushViewController(starHomeVC, animated: true)
     }
 }
+
+
