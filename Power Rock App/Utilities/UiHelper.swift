@@ -14,6 +14,8 @@ struct UIHelper {
         return gradient
     }()
     
+    
+    
     // Configure a text field with consistent styling
     static func createStyledTextField(
         placeholder: String,

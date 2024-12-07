@@ -141,9 +141,9 @@ class LoginView: UIView {
 
     // MARK: - UI Elements
     private let emailLabel = UILabel()
-    private let emailTextField = UITextField()
+    private var emailTextField = UITextField()
     private let passwordLabel = UILabel()
-    private let passwordTextField = UITextField()
+    private var passwordTextField = UITextField()
     private let loginButton = UIButton(type: .system)
     private let noteLabel = UILabel()
 
@@ -169,7 +169,6 @@ class LoginView: UIView {
         let chalkdusterFont = UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16)
 
         // Email Label
-        let emailLabel = UILabel()
         UIHelper.configureLabel(
             emailLabel,
             text: "Enter your email:",
@@ -179,14 +178,13 @@ class LoginView: UIView {
         addSubview(emailLabel)
 
         // Email TextField
-        let emailTextField = UIHelper.createStyledTextField(
+        emailTextField = UIHelper.createStyledTextField(
             placeholder: "Email",
             font: chalkdusterFont
         )
         addSubview(emailTextField)
 
         // Password Label
-        let passwordLabel = UILabel()
         UIHelper.configureLabel(
             passwordLabel,
             text: "Enter your password:",
@@ -196,7 +194,7 @@ class LoginView: UIView {
         addSubview(passwordLabel)
 
         // Password TextField
-        let passwordTextField = UIHelper.createStyledTextField(
+        passwordTextField = UIHelper.createStyledTextField(
             placeholder: "Password",
             font: chalkdusterFont
         )
@@ -204,7 +202,6 @@ class LoginView: UIView {
         addSubview(passwordTextField)
 
         // Login Button
-        let loginButton = UIButton(type: .system)
         UIHelper.configureButton(
             loginButton,
             title: "Login",
@@ -215,7 +212,6 @@ class LoginView: UIView {
         addSubview(loginButton)
 
         // Note Label
-        let noteLabel = UILabel()
         UIHelper.configureLabel(
             noteLabel,
             text: "Authentication for both user types Fan and Star only requires your email address and password, nothing else.",
@@ -226,7 +222,6 @@ class LoginView: UIView {
         noteLabel.textAlignment = .center
         addSubview(noteLabel)
     }
-
 
     // MARK: - Setup Constraints
     private func setupConstraints() {
@@ -243,8 +238,9 @@ class LoginView: UIView {
             // Email Section
             emailLabel.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 40),
             emailLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: padding),
+            emailLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -padding),
             
-            emailTextField.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 5),
+            emailTextField.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 8),
             emailTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: padding),
             emailTextField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -padding),
             emailTextField.heightAnchor.constraint(equalToConstant: 40),
@@ -252,8 +248,9 @@ class LoginView: UIView {
             // Password Section
             passwordLabel.topAnchor.constraint(equalTo: emailTextField.bottomAnchor, constant: 20),
             passwordLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: padding),
+            passwordLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -padding),
             
-            passwordTextField.topAnchor.constraint(equalTo: passwordLabel.bottomAnchor, constant: 5),
+            passwordTextField.topAnchor.constraint(equalTo: passwordLabel.bottomAnchor, constant: 8),
             passwordTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: padding),
             passwordTextField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -padding),
             passwordTextField.heightAnchor.constraint(equalToConstant: 40),
@@ -265,9 +262,10 @@ class LoginView: UIView {
             loginButton.heightAnchor.constraint(equalToConstant: 50),
             
             // Note Label
+            noteLabel.topAnchor.constraint(equalTo: loginButton.bottomAnchor, constant: 20),
             noteLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: padding),
             noteLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -padding),
-            noteLabel.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor, constant: -20)
+            noteLabel.bottomAnchor.constraint(lessThanOrEqualTo: safeAreaLayoutGuide.bottomAnchor, constant: -20)
         ])
     }
 
