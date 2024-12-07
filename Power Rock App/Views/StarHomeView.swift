@@ -3,7 +3,6 @@ import FirebaseAuth
 import FirebaseFirestore
 
 // MARK: - Protocol
-// Protocol to handle actions like logout, adding workout, and selecting workout cell
 protocol StarHomeViewDelegate: AnyObject {
     func didTapLogout()
     func didTapAddWorkout()
@@ -11,7 +10,6 @@ protocol StarHomeViewDelegate: AnyObject {
 }
 
 // MARK: - StarHomeViewController
-// ViewController to manage the home screen for "Star" users, displaying their workouts
 class StarHomeViewController: UIViewController, StarHomeViewDelegate {
 
     // MARK: - Properties
@@ -22,11 +20,18 @@ class StarHomeViewController: UIViewController, StarHomeViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        setupNavigationBar()
+        fetchWorkouts()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         fetchWorkouts()
     }
 
     // MARK: - Setup Methods
     private func setupUI() {
+        view.backgroundColor = .black
         view.addSubview(starHomeView)
         starHomeView.delegate = self
         starHomeView.translatesAutoresizingMaskIntoConstraints = false
@@ -37,24 +42,65 @@ class StarHomeViewController: UIViewController, StarHomeViewDelegate {
             starHomeView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             starHomeView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
+    }
 
-        navigationItem.title = "Home"
+    private func setupNavigationBar() {
+        // Set the navigation bar color
+        navigationController?.navigationBar.barTintColor = .black
+
+        // Set the title text color
+        navigationController?.navigationBar.titleTextAttributes = [
+            .foregroundColor: UIColor.white
+        ]
+
+        // Set the buttons' tint color
+        navigationController?.navigationBar.tintColor = .white
+
+        // Set up left and right bar button items
+        navigationItem.title = "Created Workouts"
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(didTapLogoutButton))
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(didTapAddWorkoutButton))
     }
 
     // MARK: - Fetch Workouts
     private func fetchWorkouts() {
-        DataFetcher.fetchWorkouts { [weak self] workouts, error in
+        guard let currentUser = Auth.auth().currentUser else {
+            print("No user is logged in.")
+            return
+        }
+
+        let db = Firestore.firestore()
+        let userRef = db.collection("users").document(currentUser.uid)
+
+        userRef.getDocument { [weak self] snapshot, error in
             guard let self = self else { return }
+
             if let error = error {
-                print("Error fetching workouts: \(error.localizedDescription)")
+                print("Error fetching user data: \(error.localizedDescription)")
                 return
             }
 
-            self.workouts = workouts ?? []
-            self.starHomeView.workouts = self.workouts
-            self.starHomeView.tableView.reloadData()
+            guard let data = snapshot?.data(),
+                  let userBandName = data["bandName"] as? String else {
+                print("Error: Missing or invalid band name in user data.")
+                return
+            }
+
+            DataFetcher.fetchWorkouts { workouts, error in
+                if let error = error {
+                    print("Error fetching workouts: \(error.localizedDescription)")
+                    return
+                }
+
+                // Filter workouts by band name
+                self.workouts = (workouts ?? []).filter { $0.bandName == userBandName }
+
+                // Update the view
+                self.starHomeView.workouts = self.workouts
+                DispatchQueue.main.async {
+                    self.starHomeView.tableView.reloadData()
+                }
+            }
         }
     }
 
@@ -103,12 +149,14 @@ class StarHomeViewController: UIViewController, StarHomeViewDelegate {
 
 
 // MARK: - StarHomeView
-// Custom view for displaying the workouts and user details on the StarHome screen
 class StarHomeView: UIView, UITableViewDelegate, UITableViewDataSource {
 
+    // MARK: - Properties
     weak var delegate: StarHomeViewDelegate?
     let tableView = UITableView()
     var workouts: [Workout] = []
+
+    private let backgroundImageView = UIImageView()
 
     // MARK: - Initialization
     override init(frame: CGRect) {
@@ -125,22 +173,42 @@ class StarHomeView: UIView, UITableViewDelegate, UITableViewDataSource {
 
     // MARK: - UI Setup
     private func setupUI() {
-        backgroundColor = .white
+        backgroundColor = .black
+
+        // Background Image
+        backgroundImageView.image = UIImage(named: "Background_2")
+        backgroundImageView.contentMode = .scaleAspectFill
+        backgroundImageView.alpha = 0.4
+        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(backgroundImageView)
+        sendSubviewToBack(backgroundImageView)
+
+        // Table View
         tableView.register(WorkoutTableViewCell.self, forCellReuseIdentifier: "workoutCell")
-        tableView.tableFooterView = UIView()
-        addSubview(tableView)
-        tableView.delegate = self
         tableView.dataSource = self
+        tableView.delegate = self
+        tableView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        tableView.layer.cornerRadius = 12
+        tableView.layer.borderWidth = 1.5
+        tableView.layer.borderColor = UIColor.black.cgColor
+        tableView.separatorStyle = .none
+        addSubview(tableView)
     }
 
     // MARK: - Constraints
     private func setupConstraints() {
+        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
         tableView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: topAnchor, constant: 16),
-            tableView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            backgroundImageView.topAnchor.constraint(equalTo: topAnchor),
+            backgroundImageView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            backgroundImageView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            backgroundImageView.trailingAnchor.constraint(equalTo: trailingAnchor),
+
+            tableView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 16),
+            tableView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            tableView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
             tableView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -16)
         ])
     }

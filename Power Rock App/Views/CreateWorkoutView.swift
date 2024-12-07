@@ -3,24 +3,27 @@ import FirebaseFirestore
 import FirebaseAuth
 
 // MARK: - CreateWorkoutViewController
-// ViewController for creating a workout, including adding sets and publishing to Firestore
 class CreateWorkoutViewController: UIViewController {
 
     // MARK: - Properties
     var workoutTitle: String = ""
     var difficulty: Int = 1
-    // List of sets in the workout
     var sets: [WorkoutSet] = []
-    // To hold band name fetched from Firestore
     var bandName: String = ""
-    // To hold band genres fetched from Firestore
     var genres: [String] = []
     var bandLogoUrl: String = ""
 
     // MARK: - UI Elements
     private let publishButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("Publish", for: .normal)
+        UIHelper.configureButton(
+            button,
+            title: "Publish",
+            font: UIFont.boldSystemFont(ofSize: 16),
+            backgroundColor: .clear,
+            textColor: UIColor(red: 1.0, green: 0.4, blue: 0.2, alpha: 1.0),
+            cornerRadius: 5
+        )
         button.addTarget(self, action: #selector(publishWorkout), for: .touchUpInside)
         return button
     }()
@@ -29,21 +32,52 @@ class CreateWorkoutViewController: UIViewController {
         let textField = UITextField()
         textField.placeholder = "Enter Workout Title"
         textField.borderStyle = .roundedRect
-        textField.textColor = .black
+        textField.textColor = .white
+        textField.backgroundColor = .darkGray
         textField.font = UIFont.systemFont(ofSize: 18)
+        textField.layer.cornerRadius = 5
+        textField.attributedPlaceholder = NSAttributedString(
+            string: "Enter Workout Title",
+            attributes: [NSAttributedString.Key.foregroundColor: UIColor.white]
+        )
         return textField
     }()
 
     private let difficultyPicker: UISegmentedControl = {
         let control = UISegmentedControl(items: ["1", "2", "3", "4", "5"])
         control.selectedSegmentIndex = 0
+        
+        // Set default (unselected) segment appearance
+        control.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .normal)
+        control.backgroundColor = .darkGray
+        
+        // Set selected segment appearance: black text and white background
+        control.setTitleTextAttributes([.foregroundColor: UIColor.black], for: .selected)
+        let selectedImage = UIGraphicsImageRenderer(size: CGSize(width: 50, height: 30)).image { _ in
+            UIColor.white.setFill()
+            UIBezierPath(rect: CGRect(x: 0, y: 0, width: 50, height: 30)).fill()
+        }
+        control.setBackgroundImage(selectedImage, for: .selected, barMetrics: .default)
+
+        control.layer.cornerRadius = 5
+        control.clipsToBounds = true
+
         control.addTarget(self, action: #selector(difficultyChanged), for: .valueChanged)
+        
         return control
     }()
 
+
     private let addSetButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("Add Set", for: .normal)
+        UIHelper.configureButton(
+            button,
+            title: "Add Set",
+            font: UIFont.boldSystemFont(ofSize: 16),
+            backgroundColor: .clear,
+            textColor: UIColor(red: 1.0, green: 0.4, blue: 0.2, alpha: 1.0),
+            cornerRadius: 5
+        )
         button.addTarget(self, action: #selector(addSet), for: .touchUpInside)
         return button
     }()
@@ -51,40 +85,52 @@ class CreateWorkoutViewController: UIViewController {
     private let setsTableView: UITableView = {
         let tableView = UITableView()
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "setCell")
+        tableView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        tableView.layer.cornerRadius = 10
+        tableView.separatorStyle = .none
         return tableView
     }()
 
+    private let backgroundImageView: UIImageView = {
+        let imageView = UIImageView(image: UIImage(named: "Background_1"))
+        imageView.contentMode = .scaleAspectFill
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+
     // MARK: - View Lifecycle
-    // Set up view elements when the view is loaded
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
         setupLayout()
-        fetchUserDetails()  // Fetch band name and genres here
+        fetchUserDetails()
     }
 
     // MARK: - Setup Methods
-    // Configure navigation bar with Back button and Save button
     private func setupNavigationBar() {
-        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Back", style: .plain, target: self, action: #selector(backTapped))
         navigationItem.title = "Create Workout"
+        navigationController?.navigationBar.barTintColor = .black
+        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navigationController?.navigationBar.tintColor = .white
+        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Back", style: .plain, target: self, action: #selector(backTapped))
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: publishButton)
     }
 
-    // Set up layout and constraints for the UI elements
     private func setupLayout() {
-        view.backgroundColor = .white
-        setsTableView.translatesAutoresizingMaskIntoConstraints = false
-        workoutTitleTextField.translatesAutoresizingMaskIntoConstraints = false
-        difficultyPicker.translatesAutoresizingMaskIntoConstraints = false
-        addSetButton.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(backgroundImageView)
+        view.sendSubviewToBack(backgroundImageView)
 
-        view.addSubview(workoutTitleTextField)
-        view.addSubview(difficultyPicker)
-        view.addSubview(addSetButton)
-        view.addSubview(setsTableView)
+        [workoutTitleTextField, difficultyPicker, addSetButton, setsTableView].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview($0)
+        }
 
         NSLayoutConstraint.activate([
+            backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+
             workoutTitleTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             workoutTitleTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             workoutTitleTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
@@ -97,9 +143,9 @@ class CreateWorkoutViewController: UIViewController {
             addSetButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 
             setsTableView.topAnchor.constraint(equalTo: addSetButton.bottomAnchor, constant: 20),
-            setsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            setsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            setsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            setsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            setsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            setsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -20)
         ])
 
         setsTableView.dataSource = self
@@ -107,21 +153,14 @@ class CreateWorkoutViewController: UIViewController {
     }
 
     // MARK: - Actions
-    // Navigate back to the previous screen
     @objc private func backTapped() {
         navigationController?.popViewController(animated: true)
     }
 
-    // MARK: - Publish the workout and save it to Firestore
     @objc private func publishWorkout() {
         workoutTitle = workoutTitleTextField.text ?? ""
         difficulty = difficultyPicker.selectedSegmentIndex + 1
 
-        print("Workout Title: \(workoutTitle)")
-        print("Difficulty: \(difficulty)")
-        print("Sets: \(sets)")
-
-        // Create the workout with the band logo URL
         let workout = Workout(
             bandName: bandName,
             genres: genres,
@@ -130,22 +169,11 @@ class CreateWorkoutViewController: UIViewController {
             sets: sets,
             bandLogoUrl: bandLogoUrl
         )
-        
-        // Save the workout to Firestore
-        saveWorkoutToFirestore(workout)
 
-        // Navigate back to the StarHomeViewController after publishing the workout
-        if let navigationController = navigationController {
-            for controller in navigationController.viewControllers {
-                if let starHomeVC = controller as? StarHomeViewController {
-                    navigationController.popToViewController(starHomeVC, animated: true)
-                    return
-                }
-            }
-        }
+        saveWorkoutToFirestore(workout)
+        navigationController?.popToRootViewController(animated: true)
     }
 
-    // MARK: - Save workout to Firestore
     private func saveWorkoutToFirestore(_ workout: Workout) {
         let db = Firestore.firestore()
         db.collection("workouts").addDocument(data: workout.toDict()) { error in
@@ -157,19 +185,16 @@ class CreateWorkoutViewController: UIViewController {
         }
     }
 
-    // Add a new set to the workout
     @objc private func addSet() {
         let createSetVC = CreateSetViewController()
         createSetVC.delegate = self
         navigationController?.pushViewController(createSetVC, animated: true)
     }
 
-    // Update the difficulty based on the segmented control selection
     @objc private func difficultyChanged() {
         difficulty = difficultyPicker.selectedSegmentIndex + 1
     }
 
-    // MARK: - Fetch user details to get band name, genres, and logo URL
     private func fetchUserDetails() {
         DataFetcher.fetchUserDetails { [weak self] bandName, genres, bandLogoUrl, error in
             guard let self = self else { return }
@@ -177,42 +202,33 @@ class CreateWorkoutViewController: UIViewController {
                 print("Error fetching user details: \(error.localizedDescription)")
                 return
             }
-
             self.bandName = bandName ?? ""
             self.genres = genres ?? []
             self.bandLogoUrl = bandLogoUrl ?? "Default_Workout_Image"
-            print("Fetched Band Details - Band Name: \(self.bandName), Genres: \(self.genres), Logo URL: \(self.bandLogoUrl)")
         }
     }
 }
 
 // MARK: - UITableViewDataSource & UITableViewDelegate
-// Methods for populating and interacting with the sets table view
 extension CreateWorkoutViewController: UITableViewDataSource, UITableViewDelegate {
-
-    // Return number of rows in the table view
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return sets.count
     }
 
-    // Configure each cell to display set information
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let set = sets[indexPath.row]
         let cell = tableView.dequeueReusableCell(withIdentifier: "setCell", for: indexPath)
-        cell.textLabel?.text = "Set \(indexPath.row + 1) - \(set.exercises.count) exercises"
+        cell.textLabel?.text = "Set \(indexPath.row + 1) - \(set.exercises.count) \(set.exercises.count == 1 ? "exercise" : "exercises")"
+        cell.textLabel?.textColor = .white
+        cell.backgroundColor = .darkGray
+        cell.layer.cornerRadius = 5
+        cell.clipsToBounds = true
         return cell
-    }
-
-    // Handle cell selection if needed
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        // Handle cell selection if needed
     }
 }
 
 // MARK: - CreateSetViewControllerDelegate
-// Methods for receiving data from CreateSetViewController
 extension CreateWorkoutViewController: CreateSetViewControllerDelegate {
-    // Add a set to the workout and reload the table view
     func didAddSet(_ set: WorkoutSet) {
         sets.append(set)
         setsTableView.reloadData()

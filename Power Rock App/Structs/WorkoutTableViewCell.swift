@@ -75,9 +75,20 @@ class WorkoutTableViewCell: UITableViewCell {
         containerView.addSubview(bandNameLabel)
         containerView.addSubview(difficultyLabel)
 
-        // Configure container view border
+        // Configure solid border
         containerView.layer.borderWidth = 2
-        containerView.layer.borderColor = UIColor.orange.cgColor
+        containerView.layer.borderColor = UIColor(red: 255/255, green: 69/255, blue: 0/255, alpha: 1.0).cgColor // Reddish-orange color
+        containerView.layer.cornerRadius = 10
+        containerView.layer.masksToBounds = true
+    }
+
+    // MARK: - Update Layout
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        // Ensure border properties are maintained
+        containerView.layer.borderWidth = 2
+        containerView.layer.borderColor = UIColor(red: 255/255, green: 69/255, blue: 0/255, alpha: 1.0).cgColor // Reddish-orange color
+        containerView.layer.cornerRadius = 10
     }
 
     // MARK: - Constraints Setup
@@ -153,13 +164,5 @@ class WorkoutTableViewCell: UITableViewCell {
             }
         }
         task.resume()
-    }
-
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        // Ensure the container view maintains its orange outline without additional layers
-        containerView.layer.borderWidth = 2
-        containerView.layer.borderColor = UIColor.orange.cgColor
     }
 }

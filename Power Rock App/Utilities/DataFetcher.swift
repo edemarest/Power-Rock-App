@@ -403,4 +403,129 @@ struct DataFetcher {
             batch.commit(completion: completion)
         }
     }
+    
+    static func ensurePowerPointsForFan(completion: @escaping (Error?) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            completion(NSError(domain: "Auth", code: 0, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"]))
+            return
+        }
+
+        let db = Firestore.firestore()
+        let userRef = db.collection("users").document(uid)
+
+        userRef.getDocument { snapshot, error in
+            if let error = error {
+                completion(error)
+                return
+            }
+
+            guard let data = snapshot?.data(),
+                  let userType = data["userType"] as? String,
+                  userType == "Fan" else {
+                completion(NSError(domain: "Firestore", code: 0, userInfo: [NSLocalizedDescriptionKey: "User is not a fan or data is invalid"]))
+                return
+            }
+
+            if data["powerPoints"] == nil {
+                // Add powerPoints field if it doesn't exist
+                userRef.updateData(["powerPoints": 0]) { error in
+                    if let error = error {
+                        print("Error adding powerPoints field: \(error.localizedDescription)")
+                    } else {
+                        print("Successfully initialized powerPoints field for fan user.")
+                    }
+                    completion(error)
+                }
+            } else {
+                completion(nil) // powerPoints field already exists
+            }
+        }
+    }
+
+    static func updateUserPowerPoints(by points: Int, completion: @escaping (Error?) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            completion(NSError(domain: "Auth", code: 0, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"]))
+            return
+        }
+
+        let db = Firestore.firestore()
+        let userRef = db.collection("users").document(uid)
+
+        userRef.getDocument { snapshot, error in
+            if let error = error {
+                completion(error)
+                return
+            }
+
+            guard let data = snapshot?.data(),
+                  let userType = data["userType"] as? String,
+                  userType == "Fan" else {
+                completion(NSError(domain: "Firestore", code: 0, userInfo: [NSLocalizedDescriptionKey: "User is not a fan or data is invalid"]))
+                return
+            }
+
+            userRef.updateData([
+                "powerPoints": FieldValue.increment(Int64(points))
+            ]) { error in
+                if let error = error {
+                    print("Error updating power points: \(error.localizedDescription)")
+                } else {
+                    print("Successfully updated power points by \(points).")
+                }
+                completion(error)
+            }
+        }
+    }
+
+    static func fetchUserPowerPoints(completion: @escaping (Int?, Error?) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            completion(nil, NSError(domain: "Auth", code: 0, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"]))
+            return
+        }
+
+        let db = Firestore.firestore()
+        let userRef = db.collection("users").document(uid)
+
+        userRef.getDocument { snapshot, error in
+            if let error = error {
+                completion(nil, error)
+                return
+            }
+
+            guard let data = snapshot?.data(),
+                  let powerPoints = data["powerPoints"] as? Int else {
+                completion(nil, NSError(domain: "Firestore", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid power points data"]))
+                return
+            }
+
+            completion(powerPoints, nil)
+        }
+    }
+    static func deleteWorkout(workoutTitle: String, completion: @escaping (Error?) -> Void) {
+            let db = Firestore.firestore()
+            db.collection("workouts").whereField("title", isEqualTo: workoutTitle).getDocuments { snapshot, error in
+                if let error = error {
+                    print("Error finding workout to delete: \(error.localizedDescription)")
+                    completion(error)
+                    return
+                }
+
+                guard let documents = snapshot?.documents, !documents.isEmpty else {
+                    print("No workout found with the title \(workoutTitle).")
+                    completion(nil)
+                    return
+                }
+
+                for document in documents {
+                    document.reference.delete { error in
+                        if let error = error {
+                            print("Error deleting workout: \(error.localizedDescription)")
+                        } else {
+                            print("Workout \(workoutTitle) deleted successfully.")
+                        }
+                        completion(error)
+                    }
+                }
+            }
+        }
 }

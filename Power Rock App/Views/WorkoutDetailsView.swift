@@ -66,110 +66,170 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
     // MARK: - View Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.title = "Workout Details" // Set the navigation bar title
         setupUI()
+        setupNavigationBar()
         fetchCurrentUserData()
         if let workout = workout {
             populateWorkoutDetails(workout)
         }
     }
+    
+    private func setupNavigationBar() {
+        // Set the navigation bar background color to clear or black
+        navigationController?.navigationBar.barTintColor = .black
+
+        // Set the title text color to white
+        navigationController?.navigationBar.titleTextAttributes = [
+            .foregroundColor: UIColor.white,
+            .font: UIFont.boldSystemFont(ofSize: 20)
+        ]
+
+        // Set the navigation bar items' tint color to white (affects back button and other bar buttons)
+        navigationController?.navigationBar.tintColor = .white
+    }
+
 
     // MARK: - Setup UI
     private func setupUI() {
-        view.backgroundColor = .white
-        
-        // Add Background
+        // Set background color and add background image
+        view.backgroundColor = .black
+        backgroundImageView.image = UIImage(named: "Welcome_Background")
         view.addSubview(backgroundImageView)
+        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
             backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
-        
-        // Configure Labels
-        titleLabel.font = UIFont.boldSystemFont(ofSize: 28)
-        titleLabel.textColor = .black
-        titleLabel.textAlignment = .center
-        titleLabel.numberOfLines = 0
-        
-        bandNameLabel.font = UIFont.systemFont(ofSize: 20)
-        bandNameLabel.textColor = .darkGray
-        bandNameLabel.textAlignment = .center
-        
-        genresLabel.font = UIFont.italicSystemFont(ofSize: 18)
-        genresLabel.textColor = .gray
-        genresLabel.textAlignment = .center
-        
-        // Configure Table View
+
+        // Configure labels for band and genres
+        UIHelper.configureLabel(
+            bandNameLabel,
+            text: "Band: \(workout?.bandName ?? "Unknown")",
+            font: UIFont.systemFont(ofSize: 20),
+            textColor: .white
+        )
+        bandNameLabel.textAlignment = .center // Center align text
+        bandNameLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        UIHelper.configureLabel(
+            genresLabel,
+            text: "Genres: \(workout?.genres.joined(separator: ", ") ?? "None")",
+            font: UIFont.italicSystemFont(ofSize: 18),
+            textColor: .white
+        )
+        genresLabel.textAlignment = .center // Center align text
+        genresLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        // Configure table view
+        UIHelper.configureTableView(setsTableView)
         setsTableView.register(UITableViewCell.self, forCellReuseIdentifier: "setCell")
         setsTableView.dataSource = self
         setsTableView.delegate = self
+        setsTableView.backgroundColor = .clear // Transparent background
         setsTableView.translatesAutoresizingMaskIntoConstraints = false
-        setsTableView.backgroundColor = UIColor.white.withAlphaComponent(0.9)
-        setsTableView.layer.cornerRadius = 12
-        
-        // Add Subviews
-        view.addSubview(titleLabel)
+
+        // Configure buttons using UIHelper
+        UIHelper.configureButton(
+            doWorkoutButton,
+            title: "Do Workout",
+            font: UIFont.systemFont(ofSize: 18, weight: .bold),
+            backgroundColor: UIColor(red: 255/255, green: 69/255, blue: 0/255, alpha: 1.0), // Solid reddish-orange
+            textColor: .white
+        )
+        doWorkoutButton.addTarget(self, action: #selector(handleDoWorkout), for: .touchUpInside)
+        doWorkoutButton.translatesAutoresizingMaskIntoConstraints = false
+
+        UIHelper.configureButton(
+            addToMyWorkoutsButton,
+            title: "Remove Workout",
+            font: UIFont.systemFont(ofSize: 18, weight: .bold),
+            backgroundColor: UIColor.darkGray, // Dark gray background
+            textColor: .white
+        )
+        addToMyWorkoutsButton.addTarget(self, action: #selector(handleAddOrRemoveWorkout), for: .touchUpInside)
+        addToMyWorkoutsButton.translatesAutoresizingMaskIntoConstraints = false
+
+        UIHelper.configureButton(
+            editWorkoutButton,
+            title: "Edit Workout",
+            font: UIFont.systemFont(ofSize: 18, weight: .bold),
+            backgroundColor: .white,
+            textColor: .black
+        )
+        editWorkoutButton.addTarget(self, action: #selector(editWorkout), for: .touchUpInside)
+        editWorkoutButton.translatesAutoresizingMaskIntoConstraints = false
+
+        // Add subviews
         view.addSubview(bandNameLabel)
         view.addSubview(genresLabel)
         view.addSubview(setsTableView)
-        view.addSubview(separatorView)
         view.addSubview(doWorkoutButton)
         view.addSubview(addToMyWorkoutsButton)
         view.addSubview(editWorkoutButton)
-        
-        // Button Actions
-        addToMyWorkoutsButton.addTarget(self, action: #selector(handleAddOrRemoveWorkout), for: .touchUpInside)
-        doWorkoutButton.addTarget(self, action: #selector(handleDoWorkout), for: .touchUpInside)
-        editWorkoutButton.addTarget(self, action: #selector(editWorkout), for: .touchUpInside)
 
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        bandNameLabel.translatesAutoresizingMaskIntoConstraints = false
-        genresLabel.translatesAutoresizingMaskIntoConstraints = false
-        setsTableView.translatesAutoresizingMaskIntoConstraints = false
-        addToMyWorkoutsButton.translatesAutoresizingMaskIntoConstraints = false
-        separatorView.translatesAutoresizingMaskIntoConstraints = false
-
-        // Set Constraints
+        // Set constraints
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            
-            bandNameLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
+            // Band name label
+            bandNameLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             bandNameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             bandNameLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            
+
+            // Genres label
             genresLabel.topAnchor.constraint(equalTo: bandNameLabel.bottomAnchor, constant: 10),
             genresLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             genresLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            
-            separatorView.topAnchor.constraint(equalTo: genresLabel.bottomAnchor, constant: 15),
-            separatorView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            separatorView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            separatorView.heightAnchor.constraint(equalToConstant: 1),
-            
-            setsTableView.topAnchor.constraint(equalTo: separatorView.bottomAnchor, constant: 15),
+
+            // Table view
+            setsTableView.topAnchor.constraint(equalTo: genresLabel.bottomAnchor, constant: 20),
             setsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
             setsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
             setsTableView.bottomAnchor.constraint(equalTo: doWorkoutButton.topAnchor, constant: -20),
-            
+
+            // Do Workout button
             doWorkoutButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             doWorkoutButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             doWorkoutButton.heightAnchor.constraint(equalToConstant: 50),
             doWorkoutButton.bottomAnchor.constraint(equalTo: addToMyWorkoutsButton.topAnchor, constant: -10),
 
+            // Remove Workout button
             addToMyWorkoutsButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             addToMyWorkoutsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             addToMyWorkoutsButton.heightAnchor.constraint(equalToConstant: 50),
             addToMyWorkoutsButton.bottomAnchor.constraint(equalTo: editWorkoutButton.topAnchor, constant: -10),
 
+            // Edit Workout button
             editWorkoutButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             editWorkoutButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             editWorkoutButton.heightAnchor.constraint(equalToConstant: 50),
             editWorkoutButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
         ])
     }
+
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let set = sets[indexPath.row]
+        let cell = tableView.dequeueReusableCell(withIdentifier: "setCell", for: indexPath)
+        
+        // Prepare set details with exercises
+        var setDetails = "Set \(indexPath.row + 1) - \(set.exercises.count) exercises\n"
+        for exercise in set.exercises {
+            setDetails += "• \(exercise.name) - \(exercise.reps) reps\n"
+        }
+        
+        // Configure cell appearance
+        cell.textLabel?.text = setDetails
+        cell.textLabel?.numberOfLines = 0
+        cell.textLabel?.font = UIFont.systemFont(ofSize: 16)
+        cell.textLabel?.textColor = .white // White text
+        cell.backgroundColor = .clear // Transparent background
+        cell.selectionStyle = .none
+        
+        return cell
+    }
+
 
     // MARK: - Fetch User Data
     private func fetchCurrentUserData() {
@@ -213,7 +273,7 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
             DispatchQueue.main.async {
                 if isAdded {
                     self.addToMyWorkoutsButton.setTitle("Remove from My Workouts", for: .normal)
-                    self.addToMyWorkoutsButton.backgroundColor = UIColor.systemRed
+                    self.addToMyWorkoutsButton.backgroundColor = UIColor.darkGray
                 } else {
                     self.addToMyWorkoutsButton.setTitle("Add to My Workouts", for: .normal)
                     self.addToMyWorkoutsButton.backgroundColor = UIColor.systemGreen
@@ -280,18 +340,5 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
     // MARK: - TableView DataSource
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return sets.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let set = sets[indexPath.row]
-        let cell = tableView.dequeueReusableCell(withIdentifier: "setCell", for: indexPath)
-        var setDetails = "Set \(indexPath.row + 1) - \(set.exercises.count) exercises\n"
-        for exercise in set.exercises {
-            setDetails += "• \(exercise.name) - x\(exercise.reps)\n"
-        }
-        cell.textLabel?.text = setDetails
-        cell.textLabel?.numberOfLines = 0
-        cell.textLabel?.font = UIFont.systemFont(ofSize: 16)
-        return cell
     }
 }

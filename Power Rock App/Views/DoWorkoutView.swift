@@ -6,6 +6,8 @@ class DoWorkoutViewController: UIViewController {
     var workout: Workout? // The workout passed from WorkoutDetailsView
     private var remainingSets: [WorkoutSet] = [] // Temporary sets for this session
     private var completedSets = 0 // Number of completed sets
+    private var powerPointsEarned = 0
+    private var originalSetIndices: [Int] = []
     
     // MARK: - UI Elements
     private let progressBar = UIProgressView(progressViewStyle: .default)
@@ -16,26 +18,36 @@ class DoWorkoutViewController: UIViewController {
     // MARK: - View Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = .black
         setupNavigationBar()
-        setupProgressBar()
-        setupTableView()
-        setupCongratulatoryLabel()
+        setupUI()
         setupData()
+        ensurePowerPointsInitialized()
+    }
+    
+    private func ensurePowerPointsInitialized() {
+        DataFetcher.ensurePowerPointsForFan { error in
+            if let error = error {
+                print("Error initializing power points: \(error.localizedDescription)")
+            }
+        }
     }
     
     // MARK: - Setup Methods
     private func setupNavigationBar() {
         navigationItem.title = workout?.title ?? "Workout"
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Back", style: .plain, target: self, action: #selector(dismissView))
+        finishButton.target = self
+        finishButton.action = #selector(finishWorkout)
         finishButton.isEnabled = false
         navigationItem.rightBarButtonItem = finishButton
     }
     
-    private func setupProgressBar() {
+    private func setupUI() {
+        // Progress Bar
         progressBar.progress = 0
-        progressBar.trackTintColor = .black
-        progressBar.progressTintColor = .orange
+        progressBar.trackTintColor = .darkGray
+        progressBar.progressTintColor = UIColor(red: 255/255, green: 69/255, blue: 0/255, alpha: 1.0)
         progressBar.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(progressBar)
         
@@ -45,14 +57,14 @@ class DoWorkoutViewController: UIViewController {
             progressBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             progressBar.heightAnchor.constraint(equalToConstant: 10)
         ])
-    }
-    
-    private func setupTableView() {
+        
+        // TableView
         tableView.register(SetCell.self, forCellReuseIdentifier: "SetCell")
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.backgroundColor = .clear
         tableView.separatorStyle = .none
+        tableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tableView)
         
         NSLayoutConstraint.activate([
@@ -61,15 +73,14 @@ class DoWorkoutViewController: UIViewController {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-    }
-    
-    private func setupCongratulatoryLabel() {
+        
+        // Congratulatory Label
         congratulatoryLabel.text = "You finished all the sets in \(workout?.title ?? "this workout")! Hit the finish button in the top right to complete it and gain power!"
         congratulatoryLabel.font = UIFont.boldSystemFont(ofSize: 18)
-        congratulatoryLabel.textColor = .systemGreen
+        congratulatoryLabel.textColor = .white
         congratulatoryLabel.textAlignment = .center
         congratulatoryLabel.numberOfLines = 0
-        congratulatoryLabel.isHidden = true // Initially hidden
+        congratulatoryLabel.isHidden = true
         congratulatoryLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(congratulatoryLabel)
         
@@ -82,8 +93,9 @@ class DoWorkoutViewController: UIViewController {
     
     private func setupData() {
         guard let workout = workout else { return }
-        // Create a temporary array of WorkoutSet objects for this session
         remainingSets = workout.sets.map { WorkoutSet(exercises: $0.exercises) }
+        originalSetIndices = Array(1...remainingSets.count) // Store original indices (1-based)
+        powerPointsEarned = (workout.difficulty ?? 1) * 100 // Calculate power points
         updateProgressBar()
     }
     
@@ -106,11 +118,37 @@ class DoWorkoutViewController: UIViewController {
     @objc private func dismissView() {
         navigationController?.popViewController(animated: true)
     }
+    
+    @objc private func finishWorkout() {
+        DataFetcher.updateUserPowerPoints(by: powerPointsEarned) { [weak self] error in
+            if let error = error {
+                print("Error updating power points: \(error.localizedDescription)")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self?.navigateBackToHome()
+            }
+        }
+    }
+    
+    private func navigateBackToHome() {
+        guard let navigationController = navigationController else { return }
+        
+        for viewController in navigationController.viewControllers {
+            if let fanHomeVC = viewController as? FanHomeViewController {
+                fanHomeVC.refreshPowerPoints() // Ensure power points are updated
+                navigationController.popToViewController(fanHomeVC, animated: true)
+                return
+            }
+        }
+        
+        navigationController.popViewController(animated: true) // Default fallback
+    }
 }
 
 // MARK: - UITableViewDataSource and UITableViewDelegate
 extension DoWorkoutViewController: UITableViewDataSource, UITableViewDelegate {
-    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return remainingSets.count
     }
@@ -120,7 +158,8 @@ extension DoWorkoutViewController: UITableViewDataSource, UITableViewDelegate {
             return UITableViewCell()
         }
         let set = remainingSets[indexPath.row]
-        cell.configure(with: set, setIndex: indexPath.row + 1)
+        let originalIndex = originalSetIndices[indexPath.row] // Use static index
+        cell.configure(with: set, setIndex: originalIndex)
         cell.delegate = self
         return cell
     }
@@ -129,22 +168,21 @@ extension DoWorkoutViewController: UITableViewDataSource, UITableViewDelegate {
 // MARK: - SetCellDelegate
 extension DoWorkoutViewController: SetCellDelegate {
     func didCompleteSet(_ set: WorkoutSet) {
-        // Remove the completed set and update progress
-        if let index = remainingSets.firstIndex(where: { $0 === set }) { // Compare by object reference
+        if let index = remainingSets.firstIndex(where: { $0 === set }) {
             remainingSets.remove(at: index)
+            originalSetIndices.remove(at: index) // Maintain alignment
             completedSets += 1
+
             tableView.reloadData()
             updateProgressBar()
         }
     }
 }
 
-
 // MARK: - SetCell
 protocol SetCellDelegate: AnyObject {
     func didCompleteSet(_ set: WorkoutSet)
 }
-
 class SetCell: UITableViewCell {
     
     // MARK: - Properties
@@ -159,7 +197,7 @@ class SetCell: UITableViewCell {
     // MARK: - Setup Methods
     func configure(with set: WorkoutSet, setIndex: Int) {
         self.set = set
-        setLabel.text = "Set \(setIndex)"
+        setLabel.text = "Set \(setIndex)" // Always reflect the original set index
         exerciseCompletion = Array(repeating: false, count: set.exercises.count)
         
         // Clear any existing exercise views
@@ -180,12 +218,11 @@ class SetCell: UITableViewCell {
             contentView.addSubview(exerciseCell)
             exerciseViews.append(exerciseCell)
             
-            // Add constraints
             NSLayoutConstraint.activate([
                 exerciseCell.topAnchor.constraint(equalTo: lastView.bottomAnchor, constant: 10),
                 exerciseCell.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 10),
                 exerciseCell.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -10),
-                exerciseCell.heightAnchor.constraint(equalToConstant: 44) // Fixed height for exercise cells
+                exerciseCell.heightAnchor.constraint(equalToConstant: 44)
             ])
             lastView = exerciseCell
         }
@@ -197,9 +234,10 @@ class SetCell: UITableViewCell {
             completeButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10)
         ])
         
-        // Enable or disable the complete button
-        completeButton.isEnabled = false
+        completeButton.isEnabled = false // Initially disabled
+        updateCompleteButtonState() // Ensure correct appearance
     }
+
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -212,13 +250,21 @@ class SetCell: UITableViewCell {
     }
 
     private func setupUI() {
+        backgroundColor = .clear // Transparent background to avoid visible container background
+        contentView.backgroundColor = UIColor.black.withAlphaComponent(0.9) // Dark grey (almost black)
+        contentView.layer.cornerRadius = 10
+        contentView.layer.masksToBounds = true
+
         // Configure set label
         setLabel.font = UIFont.boldSystemFont(ofSize: 18)
+        setLabel.textColor = .white
         setLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(setLabel)
 
         // Configure complete button
         completeButton.setTitle("Complete", for: .normal)
+        completeButton.setTitleColor(UIColor(red: 255/255, green: 69/255, blue: 0/255, alpha: 1.0), for: .normal) // Reddish-orange text
+        completeButton.backgroundColor = .clear // Transparent background
         completeButton.addTarget(self, action: #selector(completeSet), for: .touchUpInside)
         completeButton.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(completeButton)
@@ -232,7 +278,13 @@ class SetCell: UITableViewCell {
     }
 
     private func updateCompleteButtonState() {
-        completeButton.isEnabled = exerciseCompletion.allSatisfy { $0 }
+        if exerciseCompletion.allSatisfy({ $0 }) {
+            completeButton.isEnabled = true
+            completeButton.setTitleColor(UIColor(red: 255/255, green: 69/255, blue: 0/255, alpha: 1.0), for: .normal)
+        } else {
+            completeButton.isEnabled = false
+            completeButton.setTitleColor(.white, for: .normal)
+        }
     }
 
     @objc private func completeSet() {
@@ -248,7 +300,7 @@ class ExerciseCell: UIView {
     private let checkbox = UIButton(type: .system)
     private var isChecked = false {
         didSet {
-            let imageName = isChecked ? "checkmark.square" : "square"
+            let imageName = isChecked ? "checkmark.square.fill" : "square"
             checkbox.setImage(UIImage(systemName: imageName), for: .normal)
         }
     }
@@ -271,23 +323,35 @@ class ExerciseCell: UIView {
     }
 
     private func setupUI() {
+        backgroundColor = UIColor.black.withAlphaComponent(0.9) // Dark grey (almost black)
+        layer.cornerRadius = 5
+        layer.masksToBounds = true
+
+        nameLabel.textColor = .white
+        nameLabel.font = UIFont.systemFont(ofSize: 16)
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        repsLabel.textColor = .white
+        repsLabel.font = UIFont.systemFont(ofSize: 16)
         repsLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        checkbox.tintColor = .white // White checkbox
         checkbox.translatesAutoresizingMaskIntoConstraints = false
-        
+        checkbox.addTarget(self, action: #selector(toggleCheckbox), for: .touchUpInside)
+
         addSubview(nameLabel)
         addSubview(repsLabel)
         addSubview(checkbox)
 
-        checkbox.addTarget(self, action: #selector(toggleCheckbox), for: .touchUpInside)
-
         NSLayoutConstraint.activate([
             checkbox.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
             checkbox.centerYAnchor.constraint(equalTo: centerYAnchor),
-            
+            checkbox.widthAnchor.constraint(equalToConstant: 24),
+            checkbox.heightAnchor.constraint(equalToConstant: 24),
+
             nameLabel.leadingAnchor.constraint(equalTo: checkbox.trailingAnchor, constant: 10),
             nameLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
-            
+
             repsLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
             repsLabel.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])

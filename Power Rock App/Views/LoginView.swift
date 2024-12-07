@@ -165,51 +165,57 @@ class LoginView: UIView {
     // MARK: - Setup UI
     private func setupUI() {
         backgroundColor = .clear
-        
+
+        let chalkdusterFont = UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16)
+
         // Email Label
+        let emailLabel = UILabel()
         UIHelper.configureLabel(
             emailLabel,
             text: "Enter your email:",
-            font: UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16)
+            font: chalkdusterFont,
+            textColor: .white
         )
         addSubview(emailLabel)
-        
+
         // Email TextField
-        UIHelper.configureTextField(
-            emailTextField,
+        let emailTextField = UIHelper.createStyledTextField(
             placeholder: "Email",
-            font: UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16)
+            font: chalkdusterFont
         )
         addSubview(emailTextField)
-        
+
         // Password Label
+        let passwordLabel = UILabel()
         UIHelper.configureLabel(
             passwordLabel,
             text: "Enter your password:",
-            font: UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16)
+            font: chalkdusterFont,
+            textColor: .white
         )
         addSubview(passwordLabel)
-        
+
         // Password TextField
-        UIHelper.configureTextField(
-            passwordTextField,
+        let passwordTextField = UIHelper.createStyledTextField(
             placeholder: "Password",
-            font: UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16)
+            font: chalkdusterFont
         )
         passwordTextField.isSecureTextEntry = true
         addSubview(passwordTextField)
-        
+
         // Login Button
+        let loginButton = UIButton(type: .system)
         UIHelper.configureButton(
             loginButton,
             title: "Login",
-            font: UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16),
+            font: chalkdusterFont,
             backgroundColor: .white,
             textColor: .black
         )
         addSubview(loginButton)
 
         // Note Label
+        let noteLabel = UILabel()
         UIHelper.configureLabel(
             noteLabel,
             text: "Authentication for both user types Fan and Star only requires your email address and password, nothing else.",
@@ -220,6 +226,7 @@ class LoginView: UIView {
         noteLabel.textAlignment = .center
         addSubview(noteLabel)
     }
+
 
     // MARK: - Setup Constraints
     private func setupConstraints() {

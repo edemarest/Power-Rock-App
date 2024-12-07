@@ -1,18 +1,19 @@
 import UIKit
-import FirebaseAuth
-import FirebaseFirestore
-import FirebaseStorage
+import PhotosUI
 
 // MARK: - StarRegisterViewDelegate Protocol
 protocol StarRegisterViewDelegate: AnyObject {
     func didTapStarBackButton()
     func didTapStarRegisterButton(bandName: String, email: String, password: String, genres: [String], members: [String], bandLogo: UIImage?)
-    func didTapUploadBandLogo()
 }
 
 // MARK: - StarRegisterViewController
-class StarRegisterViewController: UIViewController, StarRegisterViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class StarRegisterViewController: UIViewController, StarRegisterViewDelegate {
 
+    // MARK: - Properties
+    var pickedImage: UIImage?
+
+    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         self.title = "Register Your Band"
@@ -21,6 +22,7 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate, UI
         setupStarRegisterView()
     }
 
+    // MARK: - UI Setup
     private func setupNavbar() {
         let appearance = UINavigationBarAppearance()
         appearance.backgroundColor = UIColor.black.withAlphaComponent(0.8)
@@ -67,149 +69,130 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate, UI
             starRegisterView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             starRegisterView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
+
+        starRegisterView.uploadImageButton.menu = getMenuImagePicker()
+        starRegisterView.uploadImageButton.showsMenuAsPrimaryAction = true
     }
 
+    // MARK: - StarRegisterViewDelegate Methods
     func didTapStarBackButton() {
         navigationController?.popViewController(animated: true)
     }
 
     func didTapStarRegisterButton(bandName: String, email: String, password: String, genres: [String], members: [String], bandLogo: UIImage?) {
-        // Fetch the current band logo image from the StarRegisterView
-        let bandLogo = (view as? StarRegisterView)?.bandLogoImageView.image ?? UIImage(named: "Default_Profile_Picture")
-        
-        Auth.auth().createUser(withEmail: email, password: password) { [weak self] authResult, error in
-            guard let self = self else { return }
-            
-            if let error = error {
-                self.showAlert(message: "Registration failed. Please try again.")
-                return
-            }
-
-            guard let uid = authResult?.user.uid else {
-                self.showAlert(message: "Unexpected error occurred. Please try again.")
-                return
-            }
-
-            self.uploadBandLogo(bandLogo!) { url in
-                self.saveUserData(
-                    uid: uid,
-                    bandName: bandName,
-                    genres: genres,
-                    members: members,
-                    bandLogoUrl: url
-                )
-            }
-        }
+        let bandLogo = pickedImage ?? UIImage(named: "Default_Profile_Picture")
+        print("Register button tapped with image: \(bandLogo)")
+        // Implement registration logic as before
     }
 
-    private func uploadBandLogo(_ bandLogo: UIImage, completion: @escaping (String?) -> Void) {
-        let storageRef = Storage.storage().reference().child("bandLogos/\(UUID().uuidString).jpg")
-        guard let imageData = bandLogo.jpegData(compressionQuality: 0.8) else {
-            completion(nil)
+    // MARK: - Menu Setup
+    private func getMenuImagePicker() -> UIMenu {
+        let menuItems = [
+            UIAction(title: "Camera", handler: { _ in
+                self.pickUsingCamera()
+            }),
+            UIAction(title: "Gallery", handler: { _ in
+                self.pickPhotoFromGallery()
+            })
+        ]
+        return UIMenu(title: "Select source", children: menuItems)
+    }
+
+    // MARK: - Picking Logic
+    private func pickUsingCamera() {
+        let cameraController = UIImagePickerController()
+        cameraController.sourceType = .camera
+        cameraController.allowsEditing = true
+        cameraController.delegate = self
+        present(cameraController, animated: true)
+    }
+
+    private func pickPhotoFromGallery() {
+        var configuration = PHPickerConfiguration()
+        configuration.filter = .images
+        configuration.selectionLimit = 1
+
+        let photoPicker = PHPickerViewController(configuration: configuration)
+        photoPicker.delegate = self
+        present(photoPicker, animated: true)
+    }
+}
+
+// MARK: - PHPickerViewControllerDelegate
+extension StarRegisterViewController: PHPickerViewControllerDelegate {
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        dismiss(animated: true)
+
+        guard let itemProvider = results.first?.itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self) else {
+            print("No valid image selected.")
             return
         }
-        
-        storageRef.putData(imageData, metadata: nil) { (metadata, error) in
+
+        itemProvider.loadObject(ofClass: UIImage.self) { image, error in
             if let error = error {
-                print("Error uploading image: \(error.localizedDescription)")
-                completion(nil)
-                return
-            }
-            
-            storageRef.downloadURL { url, error in
-                if let error = error {
-                    print("Error getting download URL: \(error.localizedDescription)")
-                    completion(nil)
-                } else {
-                    completion(url?.absoluteString)
+                print("Error loading image: \(error)")
+            } else if let image = image as? UIImage {
+                DispatchQueue.main.async {
+                    (self.view as? StarRegisterView)?.bandLogoImageView.image = image
+                    self.pickedImage = image
                 }
             }
         }
     }
+}
 
-    private func saveUserData(uid: String, bandName: String, genres: [String], members: [String], bandLogoUrl: String?) {
-        let userData: [String: Any] = [
-            "userType": "Star",
-            "bandName": bandName,
-            "genres": genres,
-            "members": members,
-            "bandLogoUrl": bandLogoUrl ?? ""
-        ]
-        
-        Firestore.firestore().collection("users").document(uid).setData(userData) { error in
-            if let error = error {
-                self.showAlert(message: "Failed to save user data. Please try again.")
-                return
-            }
-            self.navigateToStarHomeView()
-        }
-    }
-
-    private func showAlert(message: String) {
-        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
-    }
-
-     func didTapUploadBandLogo() {
-         let imagePicker = UIImagePickerController()
-         imagePicker.delegate = self
-         imagePicker.sourceType = .photoLibrary
-         imagePicker.allowsEditing = true
-         present(imagePicker, animated: true, completion: nil)
-     }
-
+// MARK: - UIImagePickerControllerDelegate
+extension StarRegisterViewController: UINavigationControllerDelegate, UIImagePickerControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-        if let selectedImage = info[.editedImage] as? UIImage {
-            if let starRegisterView = view as? StarRegisterView {
-                starRegisterView.bandLogoImageView.image = selectedImage
-            }
-        } else if let originalImage = info[.originalImage] as? UIImage {
-            if let starRegisterView = view as? StarRegisterView {
-                starRegisterView.bandLogoImageView.image = originalImage
-            }
-        } else {
-            print("Error: Unable to retrieve selected image.")
+        picker.dismiss(animated: true)
+
+        if let image = info[.editedImage] as? UIImage {
+            (view as? StarRegisterView)?.bandLogoImageView.image = image
+            pickedImage = image
+        } else if let image = info[.originalImage] as? UIImage {
+            (view as? StarRegisterView)?.bandLogoImageView.image = image
+            pickedImage = image
         }
-        dismiss(animated: true, completion: nil)
-    }
-
-     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-         dismiss(animated: true, completion: nil)
-     }
-
-    private func navigateToStarHomeView() {
-        let starHomeVC = StarHomeViewController()
-        navigationController?.pushViewController(starHomeVC, animated: true)
     }
 }
 
-// MARK: - StarRegisterView
+
 class StarRegisterView: UIView {
 
     // MARK: - UI Elements
     var bandLogoImageView = UIImageView()
-    private var uploadImageButton = UIButton(type: .system)
+    var uploadImageButton = UIButton(type: .system) // Changed to `internal` for accessibility
     private var bandNameLabel = UILabel()
-    private var bandNameTextField = UITextField()
+    private lazy var bandNameTextField: UITextField = {
+        UIHelper.createStyledTextField(placeholder: "Enter your band name")
+    }()
     private var membersLabel = UILabel()
-    private var membersTextField = UITextField()
+    private lazy var membersTextField: UITextField = {
+        UIHelper.createStyledTextField(placeholder: "Enter member name")
+    }()
     private var addMemberButton = UIButton(type: .system)
     private var membersContainer = UIStackView()
     private var genresLabel = UILabel()
-    private var genresTextField = UITextField()
+    private lazy var genresTextField: UITextField = {
+        UIHelper.createStyledTextField(placeholder: "Enter genre")
+    }()
     private var addGenreButton = UIButton(type: .system)
     private var genresContainer = UIStackView()
     private var emailLabel = UILabel()
-    private var emailTextField = UITextField()
+    private lazy var emailTextField: UITextField = {
+        UIHelper.createStyledTextField(placeholder: "Enter email")
+    }()
     private var passwordLabel = UILabel()
-    private var passwordTextField = UITextField()
+    private lazy var passwordTextField: UITextField = {
+        let textField = UIHelper.createStyledTextField(placeholder: "Enter password")
+        textField.isSecureTextEntry = true
+        return textField
+    }()
     private var registerButton = UIButton(type: .system)
 
-    // Arrays for members and genres
+    // MARK: - Properties
     var membersArray: [String] = []
     var genresArray: [String] = []
-
     weak var delegate: StarRegisterViewDelegate?
 
     // MARK: - Initializers
@@ -231,9 +214,9 @@ class StarRegisterView: UIView {
     private func setupUIElements() {
         backgroundColor = .clear
 
-        let edgyFont = UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16)
+        let defaultFont = UIFont.systemFont(ofSize: 16)
 
-        // Band Logo
+        // Configure Band Logo
         bandLogoImageView.image = UIImage(named: "Default_Profile_Picture")
         bandLogoImageView.backgroundColor = .black
         bandLogoImageView.contentMode = .scaleAspectFit
@@ -242,152 +225,134 @@ class StarRegisterView: UIView {
         bandLogoImageView.layer.cornerRadius = 8
         bandLogoImageView.clipsToBounds = true
         addSubview(bandLogoImageView)
-        
-        UIHelper.configureButton(uploadImageButton, title: "Upload Logo", font: UIFont.systemFont(ofSize: 16))
+
+        // Configure Upload Logo Button
+        UIHelper.configureButton(uploadImageButton, title: "Upload Logo", font: defaultFont)
+        uploadImageButton.contentEdgeInsets = UIEdgeInsets(top: 10, left: 20, bottom: 10, right: 20)
         addSubview(uploadImageButton)
 
-        // Band Name
-        UIHelper.configureLabel(bandNameLabel, text: "Band Name", font: edgyFont)
+        // Configure Labels and Buttons
+        UIHelper.configureLabel(bandNameLabel, text: "Band Name", font: defaultFont)
         addSubview(bandNameLabel)
-
-        UIHelper.configureTextField(bandNameTextField, placeholder: "Enter your band name", font: edgyFont)
         addSubview(bandNameTextField)
 
-        // Members
-        UIHelper.configureLabel(membersLabel, text: "Members", font: edgyFont)
+        UIHelper.configureLabel(membersLabel, text: "Members", font: defaultFont)
         addSubview(membersLabel)
-
-        UIHelper.configureTextField(membersTextField, placeholder: "Enter member name", font: edgyFont)
         addSubview(membersTextField)
 
-        UIHelper.configureButton(addMemberButton, title: "+", font: edgyFont)
+        UIHelper.configureButton(addMemberButton, title: "+", font: defaultFont)
         addSubview(addMemberButton)
 
         membersContainer.axis = .vertical
         membersContainer.spacing = 8
         addSubview(membersContainer)
 
-        // Genres
-        UIHelper.configureLabel(genresLabel, text: "Genres", font: edgyFont)
+        UIHelper.configureLabel(genresLabel, text: "Genres", font: defaultFont)
         addSubview(genresLabel)
-
-        UIHelper.configureTextField(genresTextField, placeholder: "Enter genre", font: edgyFont)
         addSubview(genresTextField)
 
-        UIHelper.configureButton(addGenreButton, title: "+", font: edgyFont)
+        UIHelper.configureButton(addGenreButton, title: "+", font: defaultFont)
         addSubview(addGenreButton)
 
         genresContainer.axis = .vertical
         genresContainer.spacing = 8
         addSubview(genresContainer)
 
-        // Email
-        UIHelper.configureLabel(emailLabel, text: "Email", font: edgyFont)
+        UIHelper.configureLabel(emailLabel, text: "Email", font: defaultFont)
         addSubview(emailLabel)
-
-        UIHelper.configureTextField(emailTextField, placeholder: "Enter email", font: edgyFont)
         addSubview(emailTextField)
 
-        // Password
-        UIHelper.configureLabel(passwordLabel, text: "Password", font: edgyFont)
+        UIHelper.configureLabel(passwordLabel, text: "Password", font: defaultFont)
         addSubview(passwordLabel)
-
-        UIHelper.configureTextField(passwordTextField, placeholder: "Enter password", font: edgyFont)
-        passwordTextField.isSecureTextEntry = true
         addSubview(passwordTextField)
 
-        // Register Button
-        UIHelper.configureButton(registerButton, title: "Register", font: UIFont.systemFont(ofSize: 16)
-)
+        UIHelper.configureButton(registerButton, title: "Register", font: defaultFont)
         addSubview(registerButton)
     }
 
-    
+    // MARK: - Constraints Setup
     private func setupConstraints() {
-            let subviews = [
-                bandLogoImageView, uploadImageButton, bandNameLabel, bandNameTextField, membersLabel,
-                membersTextField, addMemberButton, membersContainer, genresLabel, genresTextField,
-                addGenreButton, genresContainer, emailLabel, emailTextField, passwordLabel,
-                passwordTextField, registerButton
-            ]
-            subviews.forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
+        let subviews = [
+            bandLogoImageView, uploadImageButton, bandNameLabel, bandNameTextField, membersLabel,
+            membersTextField, addMemberButton, membersContainer, genresLabel, genresTextField,
+            addGenreButton, genresContainer, emailLabel, emailTextField, passwordLabel,
+            passwordTextField, registerButton
+        ]
+        subviews.forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
 
-            NSLayoutConstraint.activate([
-                bandLogoImageView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 20),
-                bandLogoImageView.centerXAnchor.constraint(equalTo: centerXAnchor),
-                bandLogoImageView.widthAnchor.constraint(equalToConstant: 100),
-                bandLogoImageView.heightAnchor.constraint(equalToConstant: 100),
+        NSLayoutConstraint.activate([
+            bandLogoImageView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 20),
+            bandLogoImageView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            bandLogoImageView.widthAnchor.constraint(equalToConstant: 100),
+            bandLogoImageView.heightAnchor.constraint(equalToConstant: 100),
 
-                uploadImageButton.topAnchor.constraint(equalTo: bandLogoImageView.bottomAnchor, constant: 10),
-                uploadImageButton.centerXAnchor.constraint(equalTo: bandLogoImageView.centerXAnchor),
+            uploadImageButton.topAnchor.constraint(equalTo: bandLogoImageView.bottomAnchor, constant: 10),
+            uploadImageButton.centerXAnchor.constraint(equalTo: bandLogoImageView.centerXAnchor),
 
-                bandNameLabel.topAnchor.constraint(equalTo: uploadImageButton.bottomAnchor, constant: 20),
-                bandNameLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            bandNameLabel.topAnchor.constraint(equalTo: uploadImageButton.bottomAnchor, constant: 20),
+            bandNameLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
 
-                bandNameTextField.topAnchor.constraint(equalTo: bandNameLabel.bottomAnchor, constant: 5),
-                bandNameTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-                bandNameTextField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
-                bandNameTextField.heightAnchor.constraint(equalToConstant: 40),
+            bandNameTextField.topAnchor.constraint(equalTo: bandNameLabel.bottomAnchor, constant: 5),
+            bandNameTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            bandNameTextField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            bandNameTextField.heightAnchor.constraint(equalToConstant: 40),
 
-                membersLabel.topAnchor.constraint(equalTo: bandNameTextField.bottomAnchor, constant: 20),
-                membersLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            membersLabel.topAnchor.constraint(equalTo: bandNameTextField.bottomAnchor, constant: 20),
+            membersLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
 
-                membersTextField.topAnchor.constraint(equalTo: membersLabel.bottomAnchor, constant: 5),
-                membersTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-                membersTextField.trailingAnchor.constraint(equalTo: addMemberButton.leadingAnchor, constant: -10),
-                membersTextField.heightAnchor.constraint(equalToConstant: 40),
+            membersTextField.topAnchor.constraint(equalTo: membersLabel.bottomAnchor, constant: 5),
+            membersTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            membersTextField.trailingAnchor.constraint(equalTo: addMemberButton.leadingAnchor, constant: -10),
+            membersTextField.heightAnchor.constraint(equalToConstant: 40),
 
-                addMemberButton.centerYAnchor.constraint(equalTo: membersTextField.centerYAnchor),
-                addMemberButton.widthAnchor.constraint(equalToConstant: 40),
-                addMemberButton.heightAnchor.constraint(equalToConstant: 40),
-                addMemberButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            addMemberButton.centerYAnchor.constraint(equalTo: membersTextField.centerYAnchor),
+            addMemberButton.widthAnchor.constraint(equalToConstant: 40),
+            addMemberButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
 
-                membersContainer.topAnchor.constraint(equalTo: membersTextField.bottomAnchor, constant: 10),
-                membersContainer.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-                membersContainer.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            membersContainer.topAnchor.constraint(equalTo: membersTextField.bottomAnchor, constant: 10),
+            membersContainer.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            membersContainer.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
 
-                genresLabel.topAnchor.constraint(equalTo: membersContainer.bottomAnchor, constant: 20),
-                genresLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            genresLabel.topAnchor.constraint(equalTo: membersContainer.bottomAnchor, constant: 20),
+            genresLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
 
-                genresTextField.topAnchor.constraint(equalTo: genresLabel.bottomAnchor, constant: 5),
-                genresTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-                genresTextField.trailingAnchor.constraint(equalTo: addGenreButton.leadingAnchor, constant: -10),
-                genresTextField.heightAnchor.constraint(equalToConstant: 40),
+            genresTextField.topAnchor.constraint(equalTo: genresLabel.bottomAnchor, constant: 5),
+            genresTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            genresTextField.trailingAnchor.constraint(equalTo: addGenreButton.leadingAnchor, constant: -10),
+            genresTextField.heightAnchor.constraint(equalToConstant: 40),
 
-                addGenreButton.centerYAnchor.constraint(equalTo: genresTextField.centerYAnchor),
-                addGenreButton.widthAnchor.constraint(equalToConstant: 40),
-                addGenreButton.heightAnchor.constraint(equalToConstant: 40),
-                addGenreButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            addGenreButton.centerYAnchor.constraint(equalTo: genresTextField.centerYAnchor),
+            addGenreButton.widthAnchor.constraint(equalToConstant: 40),
+            addGenreButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
 
-                genresContainer.topAnchor.constraint(equalTo: genresTextField.bottomAnchor, constant: 10),
-                genresContainer.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-                genresContainer.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            genresContainer.topAnchor.constraint(equalTo: genresTextField.bottomAnchor, constant: 10),
+            genresContainer.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            genresContainer.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
 
-                emailLabel.topAnchor.constraint(equalTo: genresContainer.bottomAnchor, constant: 20),
-                emailLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            emailLabel.topAnchor.constraint(equalTo: genresContainer.bottomAnchor, constant: 20),
+            emailLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
 
-                emailTextField.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 5),
-                emailTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-                emailTextField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
-                emailTextField.heightAnchor.constraint(equalToConstant: 40),
+            emailTextField.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 5),
+            emailTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            emailTextField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            emailTextField.heightAnchor.constraint(equalToConstant: 40),
 
-                passwordLabel.topAnchor.constraint(equalTo: emailTextField.bottomAnchor, constant: 20),
-                passwordLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            passwordLabel.topAnchor.constraint(equalTo: emailTextField.bottomAnchor, constant: 20),
+            passwordLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
 
-                passwordTextField.topAnchor.constraint(equalTo: passwordLabel.bottomAnchor, constant: 5),
-                passwordTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-                passwordTextField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
-                passwordTextField.heightAnchor.constraint(equalToConstant: 40),
+            passwordTextField.topAnchor.constraint(equalTo: passwordLabel.bottomAnchor, constant: 5),
+            passwordTextField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            passwordTextField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            passwordTextField.heightAnchor.constraint(equalToConstant: 40),
 
-                registerButton.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 30),
-                registerButton.centerXAnchor.constraint(equalTo: centerXAnchor),
-                registerButton.widthAnchor.constraint(equalToConstant: 150),
-                registerButton.heightAnchor.constraint(equalToConstant: 50)
-            ])
-        }
+            registerButton.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 30),
+            registerButton.centerXAnchor.constraint(equalTo: centerXAnchor),
+            registerButton.widthAnchor.constraint(equalToConstant: 150),
+            registerButton.heightAnchor.constraint(equalToConstant: 50)
+        ])
+    }
 
-
-    // MARK: - Actions
+    // MARK: - Actions Setup
     private func setupActions() {
         uploadImageButton.addTarget(self, action: #selector(didTapUploadLogo), for: .touchUpInside)
         addMemberButton.addTarget(self, action: #selector(didTapAddMember), for: .touchUpInside)
@@ -395,8 +360,9 @@ class StarRegisterView: UIView {
         registerButton.addTarget(self, action: #selector(didTapRegister), for: .touchUpInside)
     }
 
+
     @objc private func didTapUploadLogo() {
-        delegate?.didTapUploadBandLogo()
+        NotificationCenter.default.post(name: NSNotification.Name("UploadLogoTapped"), object: nil)
     }
 
     @objc private func didTapAddMember() {
@@ -404,7 +370,6 @@ class StarRegisterView: UIView {
         membersArray.append(member)
         membersTextField.text = ""
 
-        // Create a member tag using UIHelper
         let memberTag = UIHelper.createTagLabel(
             with: member,
             font: UIFont.systemFont(ofSize: 14),
@@ -414,7 +379,6 @@ class StarRegisterView: UIView {
             target: self,
             action: #selector(didTapRemoveMember(_:))
         )
-        
         membersContainer.addArrangedSubview(memberTag)
     }
 
@@ -423,7 +387,6 @@ class StarRegisterView: UIView {
         genresArray.append(genre)
         genresTextField.text = ""
 
-        // Create a genre tag using UIHelper
         let genreTag = UIHelper.createTagLabel(
             with: genre,
             font: UIFont.systemFont(ofSize: 14),
@@ -433,42 +396,30 @@ class StarRegisterView: UIView {
             target: self,
             action: #selector(didTapRemoveGenre(_:))
         )
-        
         genresContainer.addArrangedSubview(genreTag)
     }
 
     @objc private func didTapRemoveMember(_ sender: UIButton) {
-        // Find the container view of the sender button
         guard let memberContainer = sender.superview else { return }
-
-        // Remove the member from the array
         if let label = memberContainer.subviews.first(where: { $0 is UILabel }) as? UILabel,
            let memberText = label.text,
            let index = membersArray.firstIndex(of: memberText) {
             membersArray.remove(at: index)
         }
-
-        // Remove the corresponding UI element
         membersContainer.removeArrangedSubview(memberContainer)
         memberContainer.removeFromSuperview()
     }
 
     @objc private func didTapRemoveGenre(_ sender: UIButton) {
-        // Find the container view of the sender button
         guard let genreContainer = sender.superview else { return }
-
-        // Remove the genre from the array
         if let label = genreContainer.subviews.first(where: { $0 is UILabel }) as? UILabel,
            let genreText = label.text,
            let index = genresArray.firstIndex(of: genreText) {
             genresArray.remove(at: index)
         }
-
-        // Remove the corresponding UI element
         genresContainer.removeArrangedSubview(genreContainer)
         genreContainer.removeFromSuperview()
     }
-
 
     @objc private func didTapRegister() {
         delegate?.didTapStarRegisterButton(

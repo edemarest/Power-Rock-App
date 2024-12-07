@@ -84,6 +84,7 @@ class SearchWorkoutView: UIViewController {
         fetchAllWorkouts()
     }
 
+
     // MARK: - Fetch Workouts
     private func fetchAllWorkouts() {
         let db = Firestore.firestore()
@@ -146,16 +147,25 @@ class SearchWorkoutView: UIViewController {
 
         // Configure segmented control
         segmentedControl.selectedSegmentIndex = 0
-        segmentedControl.backgroundColor = .darkGray
-        segmentedControl.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .normal)
-        segmentedControl.setTitleTextAttributes([.foregroundColor: UIColor.black], for: .selected)
 
-        // Apply the gradient to the segmented control background
-        let gradientLayer = UIHelper.orangeToRedGradient
-        gradientLayer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 40)
-        if let gradientImage = gradientLayer.toImage(size: CGSize(width: UIScreen.main.bounds.width, height: 40)) {
-            segmentedControl.setBackgroundImage(gradientImage, for: .selected, barMetrics: .default)
+        // Default appearance for unselected segments (dark mode)
+        segmentedControl.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .normal)
+        segmentedControl.setBackgroundImage(UIImage(), for: .normal, barMetrics: .default)
+        segmentedControl.backgroundColor = .darkGray
+
+        // Custom appearance for selected segment
+        segmentedControl.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
+        let selectedBackgroundView = UIImageView()
+        selectedBackgroundView.backgroundColor = UIColor(red: 1.0, green: 0.4, blue: 0.2, alpha: 1.0) // Reddish-orange
+        selectedBackgroundView.layer.cornerRadius = 5
+        selectedBackgroundView.layer.masksToBounds = true
+        selectedBackgroundView.frame = CGRect(x: 0, y: 0, width: 1, height: 1) // Resize later
+        let selectedImage = UIGraphicsImageRenderer(size: selectedBackgroundView.bounds.size).image { _ in
+            selectedBackgroundView.layer.render(in: UIGraphicsGetCurrentContext()!)
         }
+        segmentedControl.setBackgroundImage(selectedImage, for: .selected, barMetrics: .default)
+
+        // Add segmented control to the view
         view.addSubview(segmentedControl)
 
         // Configure search bar
@@ -163,17 +173,30 @@ class SearchWorkoutView: UIViewController {
         searchBar.searchTextField.textColor = .white
         searchBar.searchTextField.backgroundColor = .clear // Transparent background
         searchBar.backgroundImage = UIImage() // Remove default background
+
+        // Set placeholder text with white color
+        let placeholderText = "Search workouts..."
+        let placeholderAttributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: UIColor.white,
+            .font: UIFont.systemFont(ofSize: 14) // Adjust the font size if needed
+        ]
+        searchBar.searchTextField.attributedPlaceholder = NSAttributedString(string: placeholderText, attributes: placeholderAttributes)
+
         view.addSubview(searchBar)
+
 
         // Configure difficulty slider
         difficultySlider.minimumValue = 1
         difficultySlider.maximumValue = 5
         difficultySlider.value = 1
         difficultySlider.isContinuous = true
-        if let sliderGradientImage = gradientLayer.toImage(size: CGSize(width: 200, height: 10)) {
-            difficultySlider.minimumTrackTintColor = UIColor(patternImage: sliderGradientImage) // Apply gradient as a pattern
-        }
+
+        // Slider bar color
+        difficultySlider.minimumTrackTintColor = UIColor(red: 1.0, green: 0.4, blue: 0.2, alpha: 1.0) // Reddish-orange
         difficultySlider.maximumTrackTintColor = .gray
+
+        // Slider thumb color (dark gray)
+        difficultySlider.setThumbImage(createSliderThumb(with: .darkGray), for: .normal)
         view.addSubview(difficultySlider)
 
         // Configure slider label
@@ -203,8 +226,6 @@ class SearchWorkoutView: UIViewController {
         tableView.delegate = self
         view.addSubview(tableView)
     }
-
-
 
     // MARK: - Constraints
     private func setupConstraints() {
@@ -252,6 +273,17 @@ class SearchWorkoutView: UIViewController {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+    }
+
+    private func createSliderThumb(with color: UIColor) -> UIImage {
+        let thumbSize = CGSize(width: 20, height: 20)
+        UIGraphicsBeginImageContextWithOptions(thumbSize, false, 0)
+        let context = UIGraphicsGetCurrentContext()
+        context?.setFillColor(color.cgColor)
+        context?.fillEllipse(in: CGRect(origin: .zero, size: thumbSize))
+        let thumbImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return thumbImage ?? UIImage()
     }
 
     // MARK: - Actions

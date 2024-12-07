@@ -1,115 +1,182 @@
 import UIKit
 
 // MARK: - CreateSetViewControllerDelegate Protocol
-// Protocol defining method for adding a WorkoutSet
 protocol CreateSetViewControllerDelegate: AnyObject {
     func didAddSet(_ set: WorkoutSet)
 }
 
 // MARK: - CreateSetViewController
-// ViewController for creating a workout set by adding exercises
-class CreateSetViewController: UIViewController {
+class CreateSetViewController: UIViewController, UITextFieldDelegate {
 
     // MARK: - Properties
-    var exercises: [(name: String, reps: Int)] = []  // Array of exercises in the set
+    var exercises: [(name: String, reps: Int)] = []
     weak var delegate: CreateSetViewControllerDelegate?
 
     // MARK: - UI Elements
-    private let exerciseNameTextField: UITextField = {
-        let textField = UITextField()
-        textField.placeholder = "Enter Exercise Name"
-        textField.borderStyle = .roundedRect
-        return textField
+    private let exerciseLabel: UILabel = {
+        let label = UILabel()
+        UIHelper.configureLabel(
+            label,
+            text: "Exercise",
+            font: UIFont.boldSystemFont(ofSize: 18),
+            textColor: .white
+        )
+        return label
     }()
 
-    private let repsTextField: UITextField = {
-        let textField = UITextField()
-        textField.placeholder = "Reps"
+    private lazy var exerciseNameTextField: UITextField = {
+        return UIHelper.createStyledTextField(
+            placeholder: "Enter Exercise Name"
+        )
+    }()
+
+    private let repsLabel: UILabel = {
+        let label = UILabel()
+        UIHelper.configureLabel(
+            label,
+            text: "Rep Count",
+            font: UIFont.boldSystemFont(ofSize: 18),
+            textColor: .white
+        )
+        return label
+    }()
+
+    private lazy var repsTextField: UITextField = {
+        let textField = UIHelper.createStyledTextField(
+            placeholder: "0"
+        )
         textField.keyboardType = .numberPad
-        textField.borderStyle = .roundedRect
+        textField.widthAnchor.constraint(equalToConstant: 100).isActive = true
         return textField
     }()
 
     private let addExerciseButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("Add Exercise", for: .normal)
-        button.addTarget(self, action: #selector(addExercise), for: .touchUpInside)
+        UIHelper.configureButton(
+            button,
+            title: "Add Exercise",
+            font: UIFont.boldSystemFont(ofSize: 16),
+            backgroundColor: .clear,
+            textColor: UIColor(red: 1.0, green: 0.4, blue: 0.2, alpha: 1.0)
+        )
         return button
     }()
 
     private let saveSetButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("Save Set", for: .normal)
-        button.addTarget(self, action: #selector(saveSet), for: .touchUpInside)
+        UIHelper.configureButton(
+            button,
+            title: "Save Set",
+            font: UIFont.boldSystemFont(ofSize: 16),
+            backgroundColor: .clear,
+            textColor: UIColor(red: 1.0, green: 0.4, blue: 0.2, alpha: 1.0)
+        )
         return button
     }()
 
     private let exercisesTableView: UITableView = {
         let tableView = UITableView()
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "exerciseCell")
+        UIHelper.configureTableView(tableView)
+        tableView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         return tableView
     }()
 
+    private let backgroundImageView: UIImageView = {
+        let imageView = UIImageView(image: UIImage(named: "Welcome_Background"))
+        imageView.contentMode = .scaleAspectFill
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.alpha = 0.4
+        return imageView
+    }()
+
+    private let blackOverlayView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .black
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
     // MARK: - View Lifecycle
-    // Set up view elements when the view is loaded
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
         setupLayout()
+        repsTextField.delegate = self // Assign delegate for input validation
     }
 
     // MARK: - Setup Methods
-    // Configure navigation bar with Back button and Save button
     private func setupNavigationBar() {
-        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Back", style: .plain, target: self, action: #selector(backTapped))
         navigationItem.title = "Create Set"
+        navigationController?.navigationBar.barTintColor = .black
+        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navigationController?.navigationBar.tintColor = .white
+        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Back", style: .plain, target: self, action: #selector(backTapped))
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: saveSetButton)
     }
 
-    // Set up layout and constraints for the UI elements
     private func setupLayout() {
-        view.backgroundColor = .white
+        view.addSubview(blackOverlayView)
+        view.addSubview(backgroundImageView)
+        view.sendSubviewToBack(backgroundImageView)
+        view.sendSubviewToBack(blackOverlayView)
 
-        // Layout constraints for UI elements
-        view.addSubview(exerciseNameTextField)
-        view.addSubview(repsTextField)
-        view.addSubview(addExerciseButton)
-        view.addSubview(exercisesTableView)
-
-        exerciseNameTextField.translatesAutoresizingMaskIntoConstraints = false
-        repsTextField.translatesAutoresizingMaskIntoConstraints = false
-        addExerciseButton.translatesAutoresizingMaskIntoConstraints = false
-        exercisesTableView.translatesAutoresizingMaskIntoConstraints = false
+        [exerciseLabel, exerciseNameTextField, repsLabel, repsTextField, addExerciseButton, exercisesTableView].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview($0)
+        }
 
         NSLayoutConstraint.activate([
-            exerciseNameTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            blackOverlayView.topAnchor.constraint(equalTo: view.topAnchor),
+            blackOverlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            blackOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            blackOverlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+
+            backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+
+            exerciseLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            exerciseLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+
+            exerciseNameTextField.topAnchor.constraint(equalTo: exerciseLabel.bottomAnchor, constant: 5),
             exerciseNameTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             exerciseNameTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
 
-            repsTextField.topAnchor.constraint(equalTo: exerciseNameTextField.bottomAnchor, constant: 10),
-            repsTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            repsTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            repsLabel.topAnchor.constraint(equalTo: exerciseNameTextField.bottomAnchor, constant: 20),
+            repsLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
 
-            addExerciseButton.topAnchor.constraint(equalTo: repsTextField.bottomAnchor, constant: 10),
+            repsTextField.topAnchor.constraint(equalTo: repsLabel.bottomAnchor, constant: 5),
+            repsTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+
+            addExerciseButton.topAnchor.constraint(equalTo: repsTextField.bottomAnchor, constant: 20),
             addExerciseButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 
             exercisesTableView.topAnchor.constraint(equalTo: addExerciseButton.bottomAnchor, constant: 20),
-            exercisesTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            exercisesTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            exercisesTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            exercisesTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            exercisesTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            exercisesTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -20)
         ])
 
         exercisesTableView.dataSource = self
         exercisesTableView.delegate = self
     }
 
+    // MARK: - UITextFieldDelegate
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        if textField == repsTextField {
+            // Only allow numbers in repsTextField
+            return CharacterSet.decimalDigits.isSuperset(of: CharacterSet(charactersIn: string))
+        }
+        return true
+    }
+
     // MARK: - Actions
-    // Navigate back to the previous screen
     @objc private func backTapped() {
         navigationController?.popViewController(animated: true)
     }
 
-    // Add an exercise to the list and reload table view
     @objc private func addExercise() {
         guard let name = exerciseNameTextField.text, !name.isEmpty,
               let repsText = repsTextField.text, let reps = Int(repsText) else { return }
@@ -121,7 +188,6 @@ class CreateSetViewController: UIViewController {
         repsTextField.text = ""
     }
 
-    // Save the created workout set and inform delegate
     @objc private func saveSet() {
         let newSet = WorkoutSet(exercises: exercises)
         delegate?.didAddSet(newSet)
@@ -130,25 +196,29 @@ class CreateSetViewController: UIViewController {
 }
 
 // MARK: - UITableViewDataSource & UITableViewDelegate
-// Methods for populating and interacting with the exercises table view
 extension CreateSetViewController: UITableViewDataSource, UITableViewDelegate {
-
-    // Return number of rows in the table view
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return exercises.count
     }
 
-    // Configure each cell to display exercise name and reps
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let exercise = exercises[indexPath.row]
         let cell = tableView.dequeueReusableCell(withIdentifier: "exerciseCell", for: indexPath)
-        cell.textLabel?.text = "\(exercise.name) - Reps: \(exercise.reps)"
+        UIHelper.configureLabel(
+            cell.textLabel!,
+            text: "\(exercise.name) - Reps: \(exercise.reps)",
+            font: UIFont.systemFont(ofSize: 16),
+            textColor: .white
+        )
+        cell.backgroundColor = .darkGray
+        cell.layer.cornerRadius = 5
+        cell.clipsToBounds = true
         return cell
     }
 
-    // Remove the selected exercise from the list
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         exercises.remove(at: indexPath.row)
         exercisesTableView.reloadData()
     }
 }
+
