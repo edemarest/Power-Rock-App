@@ -2,6 +2,17 @@ import UIKit
 
 struct UIHelper {
     
+    static let orangeToRedGradient: CAGradientLayer = {
+        let gradient = CAGradientLayer()
+        gradient.colors = [
+            UIColor.orange.cgColor,
+            UIColor.red.cgColor
+        ]
+        gradient.startPoint = CGPoint(x: 0, y: 0.5)
+        gradient.endPoint = CGPoint(x: 1, y: 0.5)
+        return gradient
+    }()
+    
     static func configureButton(
         _ button: UIButton,
         title: String,
@@ -170,5 +181,15 @@ extension UITextField {
         let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: amount, height: self.frame.height))
         self.leftView = paddingView
         self.leftViewMode = .always
+    }
+}
+extension CAGradientLayer {
+    func toImage(size: CGSize) -> UIImage? {
+        UIGraphicsBeginImageContext(size)
+        guard let context = UIGraphicsGetCurrentContext() else { return nil }
+        self.render(in: context)
+        let image = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return image
     }
 }

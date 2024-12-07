@@ -147,15 +147,22 @@ class SearchWorkoutView: UIViewController {
         // Configure segmented control
         segmentedControl.selectedSegmentIndex = 0
         segmentedControl.backgroundColor = .darkGray
-        segmentedControl.selectedSegmentTintColor = .white
-        segmentedControl.setTitleTextAttributes([.foregroundColor: UIColor.black], for: .selected)
         segmentedControl.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .normal)
+        segmentedControl.setTitleTextAttributes([.foregroundColor: UIColor.black], for: .selected)
+
+        // Apply the gradient to the segmented control background
+        let gradientLayer = UIHelper.orangeToRedGradient
+        gradientLayer.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 40)
+        if let gradientImage = gradientLayer.toImage(size: CGSize(width: UIScreen.main.bounds.width, height: 40)) {
+            segmentedControl.setBackgroundImage(gradientImage, for: .selected, barMetrics: .default)
+        }
         view.addSubview(segmentedControl)
 
         // Configure search bar
         searchBar.delegate = self
         searchBar.searchTextField.textColor = .white
-        searchBar.searchTextField.backgroundColor = .darkGray
+        searchBar.searchTextField.backgroundColor = .clear // Transparent background
+        searchBar.backgroundImage = UIImage() // Remove default background
         view.addSubview(searchBar)
 
         // Configure difficulty slider
@@ -163,7 +170,9 @@ class SearchWorkoutView: UIViewController {
         difficultySlider.maximumValue = 5
         difficultySlider.value = 1
         difficultySlider.isContinuous = true
-        difficultySlider.minimumTrackTintColor = .white
+        if let sliderGradientImage = gradientLayer.toImage(size: CGSize(width: 200, height: 10)) {
+            difficultySlider.minimumTrackTintColor = UIColor(patternImage: sliderGradientImage) // Apply gradient as a pattern
+        }
         difficultySlider.maximumTrackTintColor = .gray
         view.addSubview(difficultySlider)
 
@@ -194,6 +203,8 @@ class SearchWorkoutView: UIViewController {
         tableView.delegate = self
         view.addSubview(tableView)
     }
+
+
 
     // MARK: - Constraints
     private func setupConstraints() {

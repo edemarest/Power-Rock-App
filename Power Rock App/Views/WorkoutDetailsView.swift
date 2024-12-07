@@ -38,6 +38,16 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
         button.isHidden = true // Hidden until confirmed user is a Fan
         return button
     }()
+    private let editWorkoutButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Edit Workout", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = UIColor.systemOrange
+        button.layer.cornerRadius = 10
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isHidden = true // Hidden until confirmed user is a Star
+        return button
+    }()
     private let backgroundImageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(named: "WorkoutBackground"))
         imageView.contentMode = .scaleAspectFill
@@ -106,10 +116,12 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
         view.addSubview(separatorView)
         view.addSubview(doWorkoutButton)
         view.addSubview(addToMyWorkoutsButton)
+        view.addSubview(editWorkoutButton)
         
         // Button Actions
         addToMyWorkoutsButton.addTarget(self, action: #selector(handleAddOrRemoveWorkout), for: .touchUpInside)
         doWorkoutButton.addTarget(self, action: #selector(handleDoWorkout), for: .touchUpInside)
+        editWorkoutButton.addTarget(self, action: #selector(editWorkout), for: .touchUpInside)
 
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         bandNameLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -150,7 +162,12 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
             addToMyWorkoutsButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             addToMyWorkoutsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             addToMyWorkoutsButton.heightAnchor.constraint(equalToConstant: 50),
-            addToMyWorkoutsButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
+            addToMyWorkoutsButton.bottomAnchor.constraint(equalTo: editWorkoutButton.topAnchor, constant: -10),
+
+            editWorkoutButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            editWorkoutButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            editWorkoutButton.heightAnchor.constraint(equalToConstant: 50),
+            editWorkoutButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
         ])
     }
 
@@ -168,6 +185,7 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
                 self.currentUserType = userType
                 self.addToMyWorkoutsButton.isHidden = (userType != "Fan")
                 self.doWorkoutButton.isHidden = (userType != "Fan")
+                self.editWorkoutButton.isHidden = (userType != "Star")
                 self.updateAddToMyWorkoutsButton()
             }
         }
@@ -186,22 +204,17 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
     // MARK: - Update Button State
     private func updateAddToMyWorkoutsButton() {
         guard let workoutTitle = workout?.title else { return }
-        print("Checking if workout '\(workoutTitle)' is in MyWorkouts...")
-        
         DataFetcher.isWorkoutInMyWorkouts(workoutTitle: workoutTitle) { [weak self] isAdded, error in
             guard let self = self else { return }
             if let error = error {
-                print("Error checking workout '\(workoutTitle)': \(error.localizedDescription)")
+                print("Error checking workout: \(error.localizedDescription)")
                 return
             }
-            
             DispatchQueue.main.async {
                 if isAdded {
-                    print("Workout '\(workoutTitle)' is in MyWorkouts.")
                     self.addToMyWorkoutsButton.setTitle("Remove from My Workouts", for: .normal)
                     self.addToMyWorkoutsButton.backgroundColor = UIColor.systemRed
                 } else {
-                    print("Workout '\(workoutTitle)' is NOT in MyWorkouts.")
                     self.addToMyWorkoutsButton.setTitle("Add to My Workouts", for: .normal)
                     self.addToMyWorkoutsButton.backgroundColor = UIColor.systemGreen
                 }
@@ -212,42 +225,48 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
     // MARK: - Handle Add/Remove Workout
     @objc private func handleAddOrRemoveWorkout() {
         guard let workout = workout else { return }
-        
         DataFetcher.isWorkoutInMyWorkouts(workoutTitle: workout.title) { [weak self] isAdded, error in
             guard let self = self else { return }
             if let error = error {
-                print("Error checking workout in MyWorkouts: \(error.localizedDescription)")
+                print("Error checking workout: \(error.localizedDescription)")
                 return
             }
-            
             if isAdded {
-                // Remove workout
                 DataFetcher.removeWorkoutFromMyWorkouts(workoutTitle: workout.title) { error in
                     if let error = error {
                         print("Error removing workout: \(error.localizedDescription)")
                     } else {
                         DispatchQueue.main.async {
-                            print("Removed workout '\(workout.title)' successfully.")
-                            self.delegate?.didUpdateWorkouts() // Notify delegate
+                            self.delegate?.didUpdateWorkouts()
                             self.navigationController?.popViewController(animated: true)
                         }
                     }
                 }
             } else {
-                // Add workout
                 DataFetcher.addWorkoutToMyWorkouts(workout: workout) { error in
                     if let error = error {
                         print("Error adding workout: \(error.localizedDescription)")
                     } else {
                         DispatchQueue.main.async {
-                            print("Added workout '\(workout.title)' successfully.")
-                            self.delegate?.didUpdateWorkouts() // Notify delegate
+                            self.delegate?.didUpdateWorkouts()
                             self.navigationController?.popViewController(animated: true)
                         }
                     }
                 }
             }
         }
+    }
+
+    // MARK: - Handle Edit Workout
+    @objc private func editWorkout() {
+        guard let workout = workout else { return }
+        let editVC = EditWorkoutViewController()
+        editVC.workout = workout
+        editVC.onWorkoutUpdated = { [weak self] updatedWorkout in
+            self?.workout = updatedWorkout
+            self?.populateWorkoutDetails(updatedWorkout)
+        }
+        navigationController?.pushViewController(editVC, animated: true)
     }
 
     // MARK: - Handle Do Workout
