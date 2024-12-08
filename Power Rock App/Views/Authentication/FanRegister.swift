@@ -2,15 +2,12 @@ import UIKit
 import FirebaseAuth
 import FirebaseFirestore
 
-// MARK: - FanRegisterViewDelegate Protocol
-protocol FanRegisterViewDelegate: AnyObject {
-    func didTapFanBackButton()
-    func didTapFanRegisterButton(firstName: String, email: String, password: String, genres: [String])
-}
-
-// MARK: - FanRegisterViewController
+/**
+ `FanRegisterViewController` Handles fan registration flow, including user validation, Firebase registration, and navigation.
+ */
 class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
 
+    // MARK: - View Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         self.title = "Register as a Fan"
@@ -18,6 +15,7 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
         setupFanRegisterView()
     }
 
+    // MARK: - Setup Methods
     private func setupBackground() {
         let backgroundImageView = UIImageView(image: UIImage(named: "Background_1"))
         backgroundImageView.contentMode = .scaleAspectFill
@@ -53,21 +51,7 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
     }
 
     func didTapFanRegisterButton(firstName: String, email: String, password: String, genres: [String]) {
-        // Field validation
-        if firstName.isEmpty {
-            showAlert(title: "Missing Information", message: "Please enter your name.")
-            return
-        }
-        if email.isEmpty {
-            showAlert(title: "Missing Information", message: "Please enter your email.")
-            return
-        }
-        if password.isEmpty {
-            showAlert(title: "Missing Information", message: "Please enter your password.")
-            return
-        }
-        if genres.isEmpty {
-            showAlert(title: "Missing Information", message: "Please add at least one genre.")
+        guard validateFields(firstName: firstName, email: email, password: password, genres: genres) else {
             return
         }
 
@@ -76,7 +60,6 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
             guard let self = self else { return }
 
             if let error = error as NSError? {
-                // Handle specific Firebase error codes
                 switch AuthErrorCode(rawValue: error.code) {
                 case .emailAlreadyInUse:
                     self.showAlert(title: "Registration Failed", message: "The email address is already in use.")
@@ -111,9 +94,6 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
                 return
             }
 
-            print("User data saved. Adding initial workouts...")
-            
-            // Add initial workouts based on genres
             DataFetcher.addInitialWorkoutsToMyWorkouts(uid: uid, genres: genres) { error in
                 if let error = error {
                     print("Error adding initial workouts: \(error.localizedDescription)")
@@ -121,7 +101,6 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
                     return
                 }
 
-                print("Initial workouts added successfully!")
                 self.navigateToFanHome()
             }
         }
@@ -137,10 +116,30 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
         let fanHomeVC = FanHomeViewController()
         navigationController?.pushViewController(fanHomeVC, animated: true)
     }
+
+    private func validateFields(firstName: String, email: String, password: String, genres: [String]) -> Bool {
+        if firstName.isEmpty {
+            showAlert(title: "Missing Information", message: "Please enter your name.")
+            return false
+        }
+        if email.isEmpty {
+            showAlert(title: "Missing Information", message: "Please enter your email.")
+            return false
+        }
+        if password.isEmpty {
+            showAlert(title: "Missing Information", message: "Please enter your password.")
+            return false
+        }
+        if genres.isEmpty {
+            showAlert(title: "Missing Information", message: "Please add at least one genre.")
+            return false
+        }
+        return true
+    }
 }
 
-
 // MARK: - FanRegisterView
+/// Handles the UI for fan registration, including name, email, password, and genres input.
 class FanRegisterView: UIView {
 
     // MARK: - UI Elements
@@ -191,22 +190,22 @@ class FanRegisterView: UIView {
     // MARK: - UI Setup
     private func setupUIElements() {
         backgroundColor = .clear
-        
-        let edgyFont = UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16)
-        
+
+        let defaultFont = UIFont.systemFont(ofSize: 16)
+
         // Configure labels and text fields
-        UIHelper.configureLabel(nameLabel, text: "Name", font: edgyFont)
+        UIHelper.configureLabel(nameLabel, text: "Name", font: defaultFont)
         addSubview(nameLabel)
         addSubview(nameTextField)
-        
-        UIHelper.configureLabel(genresLabel, text: "Genres", font: edgyFont)
+
+        UIHelper.configureLabel(genresLabel, text: "Genres", font: defaultFont)
         addSubview(genresLabel)
         addSubview(genresTextField)
-        
+
         // Configure buttons
-        UIHelper.configureButton(addGenreButton, title: "+", font: edgyFont)
+        UIHelper.configureButton(addGenreButton, title: "+", font: defaultFont)
         addSubview(addGenreButton)
-        
+
         // Configure genresContainer
         genresContainer.axis = .vertical
         genresContainer.spacing = 8
@@ -216,20 +215,19 @@ class FanRegisterView: UIView {
         genresContainer.setContentHuggingPriority(.required, for: .vertical)
         genresContainer.setContentCompressionResistancePriority(.required, for: .vertical)
         addSubview(genresContainer)
-        
-        UIHelper.configureLabel(emailLabel, text: "Email", font: edgyFont)
+
+        UIHelper.configureLabel(emailLabel, text: "Email", font: defaultFont)
         addSubview(emailLabel)
         addSubview(emailTextField)
-        
-        UIHelper.configureLabel(passwordLabel, text: "Password", font: edgyFont)
+
+        UIHelper.configureLabel(passwordLabel, text: "Password", font: defaultFont)
         addSubview(passwordLabel)
         addSubview(passwordTextField)
-        
-        UIHelper.configureButton(registerButton, title: "Register", font: UIFont.systemFont(ofSize: 16))
+
+        UIHelper.configureButton(registerButton, title: "Register", font: defaultFont)
         addSubview(registerButton)
     }
 
-    // MARK: - Constraints Setup
     private func setupConstraints() {
         let subviews = [
             nameLabel, nameTextField,
@@ -286,13 +284,12 @@ class FanRegisterView: UIView {
         ])
     }
 
-    // MARK: - Actions Setup
     private func setupActions() {
         registerButton.addTarget(self, action: #selector(didTapRegister), for: .touchUpInside)
         addGenreButton.addTarget(self, action: #selector(didTapAddGenre), for: .touchUpInside)
     }
 
-    // MARK: - Button Actions
+    // MARK: - Actions
     @objc private func didTapRegister() {
         guard let name = nameTextField.text,
               let email = emailTextField.text,
@@ -306,11 +303,9 @@ class FanRegisterView: UIView {
             return
         }
 
-        // Add genre to the genres array
         genresArray.append(genre)
         genresTextField.text = ""
 
-        // Create and style a tag label
         let genreTag = UIHelper.createTagLabel(
             with: genre,
             font: UIFont.systemFont(ofSize: 14),
@@ -320,15 +315,9 @@ class FanRegisterView: UIView {
             target: self,
             action: #selector(didTapRemoveGenre(_:))
         )
-
-        // Add tag to the stack view
         genresContainer.addArrangedSubview(genreTag)
-
-        // Update layout for genresContainer and its parent view
         genresContainer.setNeedsLayout()
         genresContainer.layoutIfNeeded()
-        self.setNeedsLayout()
-        self.layoutIfNeeded()
     }
 
     @objc private func didTapRemoveGenre(_ sender: UIButton) {

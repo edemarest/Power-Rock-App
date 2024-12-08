@@ -1,9 +1,5 @@
 import UIKit
 
-// MARK: - SetTableViewCellDelegate
-protocol SetTableViewCellDelegate: AnyObject {
-    func didCompleteSet(at index: Int)
-}
 
 class SetTableViewCell: UITableViewCell, UITableViewDataSource, UITableViewDelegate {
 

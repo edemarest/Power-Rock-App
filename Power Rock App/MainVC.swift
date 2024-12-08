@@ -89,5 +89,3 @@ class MainVC: UIViewController {
         navigationController?.pushViewController(starHomeVC, animated: true)
     }
 }
-
-

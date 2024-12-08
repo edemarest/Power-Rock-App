@@ -1,12 +1,9 @@
 import UIKit
 
-// MARK: - CreateSetViewControllerDelegate Protocol
-protocol CreateSetViewControllerDelegate: AnyObject {
-    func didAddSet(_ set: WorkoutSet)
-}
-
-// MARK: - CreateSetViewController
-class CreateSetViewController: UIViewController, UITextFieldDelegate {
+/**
+ `CreateSetViewController` allows users to create a workout set by adding exercises with their respective repetitions. Users can view, edit, and delete exercises before saving the set.
+ */
+class CreateSetViewController: UIViewController, UITextFieldDelegate, UITableViewDataSource, UITableViewDelegate {
 
     // MARK: - Properties
     var exercises: [(name: String, reps: Int)] = []
@@ -15,36 +12,22 @@ class CreateSetViewController: UIViewController, UITextFieldDelegate {
     // MARK: - UI Elements
     private let exerciseLabel: UILabel = {
         let label = UILabel()
-        UIHelper.configureLabel(
-            label,
-            text: "Exercise",
-            font: UIFont.boldSystemFont(ofSize: 18),
-            textColor: .white
-        )
+        UIHelper.configureLabel(label, text: "Exercise", font: UIFont.boldSystemFont(ofSize: 18), textColor: .white)
         return label
     }()
 
     private lazy var exerciseNameTextField: UITextField = {
-        return UIHelper.createStyledTextField(
-            placeholder: "Enter Exercise Name"
-        )
+        UIHelper.createStyledTextField(placeholder: "Enter Exercise Name")
     }()
 
     private let repsLabel: UILabel = {
         let label = UILabel()
-        UIHelper.configureLabel(
-            label,
-            text: "Rep Count",
-            font: UIFont.boldSystemFont(ofSize: 18),
-            textColor: .white
-        )
+        UIHelper.configureLabel(label, text: "Rep Count", font: UIFont.boldSystemFont(ofSize: 18), textColor: .white)
         return label
     }()
 
     private lazy var repsTextField: UITextField = {
-        let textField = UIHelper.createStyledTextField(
-            placeholder: "0"
-        )
+        let textField = UIHelper.createStyledTextField(placeholder: "0")
         textField.keyboardType = .numberPad
         textField.widthAnchor.constraint(equalToConstant: 100).isActive = true
         return textField
@@ -105,7 +88,6 @@ class CreateSetViewController: UIViewController, UITextFieldDelegate {
 
     // MARK: - UI Setup
     private func setupUIElements() {
-        // Add subviews
         view.addSubview(blackOverlayView)
         view.addSubview(backgroundImageView)
         view.sendSubviewToBack(backgroundImageView)
@@ -116,16 +98,13 @@ class CreateSetViewController: UIViewController, UITextFieldDelegate {
             view.addSubview($0)
         }
 
-        // Add button targets
         addExerciseButton.addTarget(self, action: #selector(addExercise), for: .touchUpInside)
         saveSetButton.addTarget(self, action: #selector(saveSet), for: .touchUpInside)
 
-        // Assign delegate for table view and text field
         exercisesTableView.dataSource = self
         exercisesTableView.delegate = self
         repsTextField.delegate = self
 
-        // Navigation setup
         navigationItem.title = "Create Set"
         navigationController?.navigationBar.barTintColor = .black
         navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
@@ -133,7 +112,6 @@ class CreateSetViewController: UIViewController, UITextFieldDelegate {
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Back", style: .plain, target: self, action: #selector(backTapped))
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: saveSetButton)
 
-        // Constraints
         NSLayoutConstraint.activate([
             blackOverlayView.topAnchor.constraint(equalTo: view.topAnchor),
             blackOverlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -196,15 +174,11 @@ class CreateSetViewController: UIViewController, UITextFieldDelegate {
             return
         }
 
-        // Create and save the set if there are exercises
         let newSet = WorkoutSet(exercises: exercises)
         delegate?.didAddSet(newSet)
         navigationController?.popViewController(animated: true)
     }
-}
-
-// MARK: - UITableViewDataSource & UITableViewDelegate
-extension CreateSetViewController: UITableViewDataSource, UITableViewDelegate {
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return exercises.count
     }

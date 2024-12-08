@@ -2,22 +2,19 @@ import UIKit
 import FirebaseAuth
 import FirebaseFirestore
 
-// MARK: - WorkoutDetailsDelegate Protocol
-protocol WorkoutDetailsDelegate: AnyObject {
-    func didUpdateWorkouts()
-}
-
-// MARK: - WorkoutDetailsView
-class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDelegate {
+/**
+ `WorkoutDetailsViewController` serves as the initial screen of the app, providing options for users to register as a Fan, register as a Star, or log in. It displays a welcoming interface with navigation options and ensures the navigation bar styling aligns with the current screen.
+ */
+class WorkoutDetailsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     // MARK: - Properties
-    var workout: Workout? // The workout object passed from FanHomeView or other screens
-    var currentUserType: String = "" // This will be either "Star" or "Fan"
-    weak var delegate: WorkoutDetailsDelegate?
+    var workout: Workout?
+    var currentUserType: String = ""
+    weak var delegate: WorkoutDetailsViewControllerDelegate?
 
     // MARK: - UI Elements
     private let workoutNameLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 36) // Super large bold font
+        label.font = UIFont.boldSystemFont(ofSize: 36)
         label.textColor = .white
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -40,10 +37,10 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
         let button = UIButton(type: .system)
         button.setTitle("Do Workout", for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor.systemBlue
+        button.backgroundColor = UIColor.systemOrange
         button.layer.cornerRadius = 10
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.isHidden = true // Hidden until confirmed user is a Fan
+        button.isHidden = true
         return button
     }()
     private let addToMyWorkoutsButton: UIButton = {
@@ -52,7 +49,7 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
         button.backgroundColor = UIColor.systemGreen
         button.layer.cornerRadius = 10
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.isHidden = true // Hidden until confirmed user is a Fan
+        button.isHidden = true
         return button
     }()
     private let deleteWorkoutButton: UIButton = {
@@ -77,7 +74,7 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
     // MARK: - View Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.title = "Workout Details" // Set the navigation bar title
+        self.title = "Workout Details"
         setupUI()
         setupNavigationBar()
         fetchCurrentUserData()
@@ -285,18 +282,6 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
         }
     }
 
-    // MARK: - Handle Edit Workout
-    @objc private func editWorkout() {
-        guard let workout = workout else { return }
-        let editVC = EditWorkoutViewController()
-        editVC.workout = workout
-        editVC.onWorkoutUpdated = { [weak self] updatedWorkout in
-            self?.workout = updatedWorkout
-            self?.populateWorkoutDetails(updatedWorkout)
-        }
-        navigationController?.pushViewController(editVC, animated: true)
-    }
-
     // MARK: - Handle Do Workout
     @objc private func handleDoWorkout() {
         guard let workout = workout else { return }
@@ -314,17 +299,15 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
         let cell = tableView.dequeueReusableCell(withIdentifier: "setCell", for: indexPath)
         let set = sets[indexPath.row]
 
-        // Configure the cell for multiple lines
         cell.textLabel?.numberOfLines = 0
         cell.textLabel?.text = formatSetDetails(set, index: indexPath.row + 1)
 
-        // Style the cell
         cell.backgroundColor = .clear
         cell.textLabel?.textColor = .white
         cell.textLabel?.font = UIFont.systemFont(ofSize: 16)
         cell.layer.cornerRadius = 10
         cell.clipsToBounds = true
-        cell.selectionStyle = .none // Disable tap functionality
+        cell.selectionStyle = .none
         return cell
     }
 

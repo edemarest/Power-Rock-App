@@ -74,7 +74,6 @@ struct DataFetcher {
 
             for document in documents {
                 let data = document.data()
-                print("Workout Data: \(data)") // Log the raw data
 
                 if let bandName = data["bandName"] as? String,
                    let genres = data["genres"] as? [String],
@@ -205,7 +204,32 @@ struct DataFetcher {
             completion(workouts, nil)
         }
     }
+    
+    static func addWorkoutToGlobal(workout: Workout, completion: @escaping (Error?) -> Void) {
+        let db = Firestore.firestore()
+        let workoutsRef = db.collection("workouts") // Reference to the global collection
 
+        // Data to add
+        let workoutData: [String: Any] = [
+            "title": workout.title,
+            "bandName": workout.bandName,
+            "genres": workout.genres,
+            "difficulty": workout.difficulty,
+            "sets": workout.sets.map { set in
+                ["exercises": set.exercises.map { ["name": $0.name, "reps": $0.reps] }]
+            },
+            "bandLogoUrl": workout.bandLogoUrl
+        ]
+
+        workoutsRef.document(workout.title).setData(workoutData) { error in
+            if let error = error {
+                print("Error adding workout to global collection: \(error.localizedDescription)")
+            } else {
+                print("Successfully added workout '\(workout.title)' to the global collection.")
+            }
+            completion(error)
+        }
+    }
 
     // MARK: - Fetch Workout Details for MyWorkouts
     static func fetchWorkoutsByTitles(titles: [String], completion: @escaping ([Workout]?, Error?) -> Void) {
@@ -535,4 +559,24 @@ struct DataFetcher {
                 }
             }
         }
+    // Fetch the user type based on the user ID
+    static func fetchUserType(for uid: String, completion: @escaping (String?, Error?) -> Void) {
+        let db = Firestore.firestore()
+        let userRef = db.collection("users").document(uid)
+        
+        userRef.getDocument { snapshot, error in
+            if let error = error {
+                completion(nil, error)
+                return
+            }
+            
+            guard let data = snapshot?.data(),
+                  let userType = data["userType"] as? String else {
+                completion(nil, NSError(domain: "Firestore", code: 0, userInfo: [NSLocalizedDescriptionKey: "User type not found or data is invalid"]))
+                return
+            }
+            
+            completion(userType, nil)
+        }
+    }
 }

@@ -1,14 +1,8 @@
 import UIKit
 
-// MARK: - WelcomeViewDelegate
-// Protocol defining methods for WelcomeView button interactions
-protocol WelcomeViewDelegate: AnyObject {
-    func didTapFanButton()
-    func didTapStarButton()
-    func didTapLoginButtonFromWelcome()
-}
-
-// MARK: - WelcomeViewController
+/**
+ `WelcomeViewController` serves as the initial screen of the app, providing options for users to register as a Fan, register as a Star, or log in. It displays a welcoming interface with navigation options and ensures the navigation bar styling aligns with the current screen.
+ */
 class WelcomeViewController: UIViewController, WelcomeViewDelegate {
 
     private let welcomeView = WelcomeView()
@@ -22,8 +16,6 @@ class WelcomeViewController: UIViewController, WelcomeViewDelegate {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        // Make the navigation bar transparent
         navigationController?.setNavigationBarHidden(false, animated: false)
         let appearance = UINavigationBarAppearance()
         appearance.configureWithTransparentBackground()
@@ -33,13 +25,11 @@ class WelcomeViewController: UIViewController, WelcomeViewDelegate {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        
-        // Reset the navigation bar to black
         navigationController?.setNavigationBarHidden(false, animated: false)
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .black // Set the background color to black
-        appearance.titleTextAttributes = [.foregroundColor: UIColor.white] // Set the title color to white
+        appearance.backgroundColor = .black
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
         navigationController?.navigationBar.standardAppearance = appearance
         navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }
@@ -105,18 +95,20 @@ class WelcomeViewController: UIViewController, WelcomeViewDelegate {
     }
 }
 
-
+/**
+ `WelcomeView` defines the layout and UI elements for the welcome screen. It includes options to register as a Fan, register as a Star, or log in, with an inviting design and call-to-action buttons.
+ */
 class WelcomeView: UIView {
 
-    let welcomeLabel = UILabel()
-    let powerRockLabel = UILabel()
-    let iconImageView = UIImageView()
-    let getStartedLabel = UILabel()
-    let areYouLabel = UILabel()
-    let fanButton = UIButton(type: .system)
-    let starButton = UIButton(type: .system)
-    let alreadyHaveAccountLabel = UILabel()
-    let loginButton = UIButton(type: .system)
+    private let welcomeLabel = UILabel()
+    private let powerRockLabel = UILabel()
+    private let iconImageView = UIImageView()
+    private let getStartedLabel = UILabel()
+    private let areYouLabel = UILabel()
+    private let fanButton = UIButton(type: .system)
+    private let starButton = UIButton(type: .system)
+    private let alreadyHaveAccountLabel = UILabel()
+    private let loginButton = UIButton(type: .system)
 
     weak var delegate: WelcomeViewDelegate?
 
@@ -137,81 +129,42 @@ class WelcomeView: UIView {
     private func setupUIElements() {
         backgroundColor = .clear
 
-        // Welcome Label
         UIHelper.configureLabel(welcomeLabel, text: "Welcome to", font: UIFont.systemFont(ofSize: 24, weight: .medium))
         addSubview(welcomeLabel)
 
-        // POWER ROCK Label
         UIHelper.configureLabel(powerRockLabel, text: "POWER ROCK", font: UIFont.systemFont(ofSize: 48, weight: .bold))
         addSubview(powerRockLabel)
 
-        // Icon Image
         iconImageView.image = UIImage(named: "Logo")
         iconImageView.contentMode = .scaleAspectFit
         addSubview(iconImageView)
 
-        // Get Started Label
         UIHelper.configureLabel(getStartedLabel, text: "Let’s get started!", font: UIFont.systemFont(ofSize: 18, weight: .regular))
         addSubview(getStartedLabel)
 
-        // Are You Label
         UIHelper.configureLabel(areYouLabel, text: "Are you a...", font: UIFont.systemFont(ofSize: 22, weight: .bold))
         addSubview(areYouLabel)
 
-        // Fan Button
-        UIHelper.configureButtonWithIcon(
-            fanButton,
-            title: "FAN",
-            font: UIFont.boldSystemFont(ofSize: 20),
-            iconName: "Fan_Icon",
-            backgroundColor: .white,
-            textColor: .black,
-            cornerRadius: 10
-        )
-        addSubview(fanButton) // Add fanButton to view hierarchy
+        UIHelper.configureButtonWithIcon(fanButton, title: "FAN", font: UIFont.boldSystemFont(ofSize: 20), iconName: "Fan_Icon", backgroundColor: .white, textColor: .black, cornerRadius: 10)
+        addSubview(fanButton)
 
-        // Star Button
-        UIHelper.configureButtonWithIcon(
-            starButton,
-            title: "STAR",
-            font: UIFont.boldSystemFont(ofSize: 20),
-            iconName: "Star_Icon",
-            backgroundColor: .white,
-            textColor: .black,
-            cornerRadius: 10
-        )
-        addSubview(starButton) // Add starButton to view hierarchy
+        UIHelper.configureButtonWithIcon(starButton, title: "STAR", font: UIFont.boldSystemFont(ofSize: 20), iconName: "Star_Icon", backgroundColor: .white, textColor: .black, cornerRadius: 10)
+        addSubview(starButton)
 
-        // Already Have Account Label
         UIHelper.configureLabel(alreadyHaveAccountLabel, text: "Already have an account?", font: UIFont.systemFont(ofSize: 16))
         addSubview(alreadyHaveAccountLabel)
 
-        // Login Button
-        UIHelper.configureButton(
-            loginButton,
-            title: "Login",
-            font: UIFont.systemFont(ofSize: 16),
-            backgroundColor: .clear,
-            textColor: .white,
-            cornerRadius: 10
-        )
+        UIHelper.configureButton(loginButton, title: "Login", font: UIFont.systemFont(ofSize: 16), backgroundColor: .clear, textColor: .white, cornerRadius: 10)
         loginButton.layer.borderWidth = 2
         loginButton.layer.borderColor = UIColor.white.cgColor
         loginButton.contentEdgeInsets = UIEdgeInsets(top: 10, left: 20, bottom: 10, right: 20)
         addSubview(loginButton)
     }
 
-
     private func setupConstraints() {
-        welcomeLabel.translatesAutoresizingMaskIntoConstraints = false
-        powerRockLabel.translatesAutoresizingMaskIntoConstraints = false
-        iconImageView.translatesAutoresizingMaskIntoConstraints = false
-        getStartedLabel.translatesAutoresizingMaskIntoConstraints = false
-        areYouLabel.translatesAutoresizingMaskIntoConstraints = false
-        fanButton.translatesAutoresizingMaskIntoConstraints = false
-        starButton.translatesAutoresizingMaskIntoConstraints = false
-        alreadyHaveAccountLabel.translatesAutoresizingMaskIntoConstraints = false
-        loginButton.translatesAutoresizingMaskIntoConstraints = false
+        [welcomeLabel, powerRockLabel, iconImageView, getStartedLabel, areYouLabel, fanButton, starButton, alreadyHaveAccountLabel, loginButton].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
 
         NSLayoutConstraint.activate([
             welcomeLabel.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 40),
@@ -236,7 +189,6 @@ class WelcomeView: UIView {
             fanButton.trailingAnchor.constraint(equalTo: centerXAnchor, constant: -10),
             fanButton.heightAnchor.constraint(equalToConstant: 50),
 
-            // Star Button
             starButton.topAnchor.constraint(equalTo: areYouLabel.bottomAnchor, constant: 20),
             starButton.leadingAnchor.constraint(equalTo: centerXAnchor, constant: 10),
             starButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -40),
@@ -255,10 +207,6 @@ class WelcomeView: UIView {
         starButton.addTarget(self, action: #selector(didTapStar), for: .touchUpInside)
         loginButton.addTarget(self, action: #selector(didTapLoginButtonFromWelcome), for: .touchUpInside)
     }
-    
-    override func layoutSubviews() {
-        super.layoutSubviews()
-    }
 
     @objc private func didTapFan() {
         delegate?.didTapFanButton()
@@ -267,7 +215,6 @@ class WelcomeView: UIView {
     @objc private func didTapStar() {
         delegate?.didTapStarButton()
     }
-
 
     @objc private func didTapLoginButtonFromWelcome() {
         delegate?.didTapLoginButtonFromWelcome()

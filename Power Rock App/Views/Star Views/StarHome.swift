@@ -2,19 +2,14 @@ import UIKit
 import FirebaseAuth
 import FirebaseFirestore
 
-// MARK: - Protocol
-protocol StarHomeViewDelegate: AnyObject {
-    func didTapLogout()
-    func didTapAddWorkout()
-    func didTapWorkoutCell(with workout: Workout)
-}
-
-// MARK: - StarHomeViewController
+/**
+ `StarHomeViewController` handles the display of created workouts for Star users. It supports adding workouts, viewing workout details, and logging out.
+ */
 class StarHomeViewController: UIViewController, StarHomeViewDelegate {
 
     // MARK: - Properties
     private let starHomeView = StarHomeView()
-    var workouts: [Workout] = [] // Workouts to be displayed
+    var workouts: [Workout] = []
 
     // MARK: - View Lifecycle
     override func viewDidLoad() {
@@ -45,18 +40,10 @@ class StarHomeViewController: UIViewController, StarHomeViewDelegate {
     }
 
     private func setupNavigationBar() {
-        // Set the navigation bar color
         navigationController?.navigationBar.barTintColor = .black
-
-        // Set the title text color
-        navigationController?.navigationBar.titleTextAttributes = [
-            .foregroundColor: UIColor.white
-        ]
-
-        // Set the buttons' tint color
+        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
         navigationController?.navigationBar.tintColor = .white
 
-        // Set up left and right bar button items
         navigationItem.title = "Created Workouts"
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(didTapLogoutButton))
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(didTapAddWorkoutButton))
@@ -64,25 +51,14 @@ class StarHomeViewController: UIViewController, StarHomeViewDelegate {
 
     // MARK: - Fetch Workouts
     private func fetchWorkouts() {
-        guard let currentUser = Auth.auth().currentUser else {
-            print("No user is logged in.")
-            return
-        }
-
-        let db = Firestore.firestore()
-        let userRef = db.collection("users").document(currentUser.uid)
-
-        userRef.getDocument { [weak self] snapshot, error in
+        DataFetcher.fetchUserDetails { [weak self] bandName, _, _, error in
             guard let self = self else { return }
-
             if let error = error {
-                print("Error fetching user data: \(error.localizedDescription)")
+                print("Error fetching user details: \(error.localizedDescription)")
                 return
             }
-
-            guard let data = snapshot?.data(),
-                  let userBandName = data["bandName"] as? String else {
-                print("Error: Missing or invalid band name in user data.")
+            guard let bandName = bandName else {
+                print("Band name not found for the current user.")
                 return
             }
 
@@ -92,16 +68,19 @@ class StarHomeViewController: UIViewController, StarHomeViewDelegate {
                     return
                 }
 
-                // Filter workouts by band name
-                self.workouts = (workouts ?? []).filter { $0.bandName == userBandName }
-
-                // Update the view
+                self.workouts = (workouts ?? []).filter { $0.bandName == bandName }
                 self.starHomeView.workouts = self.workouts
+
                 DispatchQueue.main.async {
                     self.starHomeView.tableView.reloadData()
                 }
             }
         }
+    }
+    
+    // MARK: - CreateWorkoutViewControllerDelegate
+    func didPublishWorkout() {
+        fetchWorkouts()
     }
 
     // MARK: - Actions
@@ -121,15 +100,15 @@ class StarHomeViewController: UIViewController, StarHomeViewDelegate {
 
     // MARK: - StarHomeViewDelegate Methods
     func didTapLogout() {
-        print("Logout tapped from StarHomeView")
+        didTapLogoutButton()
     }
 
     func didTapAddWorkout() {
-        print("Add Workout tapped from StarHomeView")
+        didTapAddWorkoutButton()
     }
 
     func didTapWorkoutCell(with workout: Workout) {
-        let workoutDetailsVC = WorkoutDetailsView()
+        let workoutDetailsVC = WorkoutDetailsViewController()
         workoutDetailsVC.workout = workout
         navigationController?.pushViewController(workoutDetailsVC, animated: true)
     }
@@ -147,8 +126,9 @@ class StarHomeViewController: UIViewController, StarHomeViewDelegate {
     }
 }
 
-
-// MARK: - StarHomeView
+/**
+ `StarHomeView` displays a list of workouts created by the Star user, allowing them to view workout details.
+ */
 class StarHomeView: UIView, UITableViewDelegate, UITableViewDataSource {
 
     // MARK: - Properties
@@ -175,7 +155,6 @@ class StarHomeView: UIView, UITableViewDelegate, UITableViewDataSource {
     private func setupUI() {
         backgroundColor = .black
 
-        // Background Image
         backgroundImageView.image = UIImage(named: "Background_2")
         backgroundImageView.contentMode = .scaleAspectFill
         backgroundImageView.alpha = 0.4
@@ -183,7 +162,6 @@ class StarHomeView: UIView, UITableViewDelegate, UITableViewDataSource {
         addSubview(backgroundImageView)
         sendSubviewToBack(backgroundImageView)
 
-        // Table View
         tableView.register(WorkoutTableViewCell.self, forCellReuseIdentifier: "workoutCell")
         tableView.dataSource = self
         tableView.delegate = self

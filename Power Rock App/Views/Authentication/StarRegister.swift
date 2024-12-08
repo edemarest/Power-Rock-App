@@ -3,13 +3,9 @@ import PhotosUI
 import FirebaseAuth
 import FirebaseFirestore
 
-// MARK: - StarRegisterViewDelegate Protocol
-protocol StarRegisterViewDelegate: AnyObject {
-    func didTapStarBackButton()
-    func didTapStarRegisterButton(bandName: String, email: String, password: String, genres: [String], members: [String], bandLogo: UIImage?)
-}
-
-// MARK: - StarRegisterViewController
+/**
+ `StarRegisterViewController` handles the registration of band accounts (Star users). Users can input their band name, email, password, genres, and members. A band logo can also be uploaded using the camera or gallery. On successful registration, user data is stored in Firestore, and the user is navigated to the Star Home screen.
+ */
 class StarRegisterViewController: UIViewController, StarRegisterViewDelegate {
 
     // MARK: - Properties
@@ -24,7 +20,6 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate {
         setupStarRegisterView()
     }
 
-    // MARK: - UI Setup
     private func setupNavbar() {
         let appearance = UINavigationBarAppearance()
         appearance.backgroundColor = UIColor.black.withAlphaComponent(0.8)
@@ -76,47 +71,30 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate {
         starRegisterView.uploadImageButton.showsMenuAsPrimaryAction = true
     }
 
-    // MARK: - StarRegisterViewDelegate Methods
     func didTapStarBackButton() {
         navigationController?.popViewController(animated: true)
     }
 
     func didTapStarRegisterButton(bandName: String, email: String, password: String, genres: [String], members: [String], bandLogo: UIImage?) {
-        // Validation
-        if bandName.isEmpty {
-            showAlert(title: "Missing Information", message: "Please enter your band name.")
-            return
-        }
-        if email.isEmpty {
-            showAlert(title: "Missing Information", message: "Please enter your email.")
-            return
-        }
-        if password.isEmpty {
-            showAlert(title: "Missing Information", message: "Please enter your password.")
-            return
-        }
-        if genres.isEmpty {
-            showAlert(title: "Missing Information", message: "Please add at least one genre.")
-            return
-        }
-        if members.isEmpty {
-            showAlert(title: "Missing Information", message: "Please add at least one band member.")
+        guard !bandName.isEmpty, !email.isEmpty, !password.isEmpty, !genres.isEmpty, !members.isEmpty else {
+            showAlert(title: "Missing Information", message: "Please fill in all fields.")
             return
         }
 
-        // Firebase registration
         Auth.auth().createUser(withEmail: email, password: password) { [weak self] authResult, error in
             guard let self = self else { return }
 
             if let error = error as NSError? {
+                let message: String
                 switch AuthErrorCode(rawValue: error.code) {
                 case .emailAlreadyInUse:
-                    self.showAlert(title: "Registration Failed", message: "The email address is already in use.")
+                    message = "The email address is already in use."
                 case .invalidEmail:
-                    self.showAlert(title: "Registration Failed", message: "The email address is invalid.")
+                    message = "The email address is invalid."
                 default:
-                    self.showAlert(title: "Registration Failed", message: "An unexpected error occurred: \(error.localizedDescription)")
+                    message = "An unexpected error occurred: \(error.localizedDescription)"
                 }
+                self.showAlert(title: "Registration Failed", message: message)
                 return
             }
 
@@ -141,12 +119,10 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate {
 
         Firestore.firestore().collection("users").document(uid).setData(userData) { error in
             if let error = error {
-                print("Error saving user data: \(error.localizedDescription)")
                 self.showAlert(title: "Error", message: "Failed to save user data. Please try again.")
                 return
             }
 
-            print("Star registration successful!")
             self.navigateToStarHome()
         }
     }
@@ -162,15 +138,10 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate {
         navigationController?.pushViewController(starHomeVC, animated: true)
     }
 
-    // MARK: - Menu Setup
     private func getMenuImagePicker() -> UIMenu {
         let menuItems = [
-            UIAction(title: "Camera", handler: { _ in
-                self.pickUsingCamera()
-            }),
-            UIAction(title: "Gallery", handler: { _ in
-                self.pickPhotoFromGallery()
-            })
+            UIAction(title: "Camera", handler: { _ in self.pickUsingCamera() }),
+            UIAction(title: "Gallery", handler: { _ in self.pickPhotoFromGallery() })
         ]
         return UIMenu(title: "Select source", children: menuItems)
     }
@@ -198,16 +169,10 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate {
 extension StarRegisterViewController: PHPickerViewControllerDelegate {
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
         dismiss(animated: true)
+        guard let itemProvider = results.first?.itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self) else { return }
 
-        guard let itemProvider = results.first?.itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self) else {
-            print("No valid image selected.")
-            return
-        }
-
-        itemProvider.loadObject(ofClass: UIImage.self) { image, error in
-            if let error = error {
-                print("Error loading image: \(error)")
-            } else if let image = image as? UIImage {
+        itemProvider.loadObject(ofClass: UIImage.self) { image, _ in
+            if let image = image as? UIImage {
                 DispatchQueue.main.async {
                     (self.view as? StarRegisterView)?.bandLogoImageView.image = image
                     self.pickedImage = image
@@ -221,7 +186,6 @@ extension StarRegisterViewController: PHPickerViewControllerDelegate {
 extension StarRegisterViewController: UINavigationControllerDelegate, UIImagePickerControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
         picker.dismiss(animated: true)
-
         if let image = info[.editedImage] as? UIImage {
             (view as? StarRegisterView)?.bandLogoImageView.image = image
             pickedImage = image
@@ -231,13 +195,14 @@ extension StarRegisterViewController: UINavigationControllerDelegate, UIImagePic
         }
     }
 }
-
-
+/**
+ `StarRegisterView` is a custom UIView used for the band (Star) registration process. It contains fields for entering band details like band name, email, password, genres, and members, along with a band logo upload option.
+ */
 class StarRegisterView: UIView {
 
     // MARK: - UI Elements
     var bandLogoImageView = UIImageView()
-    var uploadImageButton = UIButton(type: .system) // Changed to `internal` for accessibility
+    var uploadImageButton = UIButton(type: .system)
     private var bandNameLabel = UILabel()
     private lazy var bandNameTextField: UITextField = {
         UIHelper.createStyledTextField(placeholder: "Enter your band name")
@@ -292,7 +257,6 @@ class StarRegisterView: UIView {
 
         let defaultFont = UIFont.systemFont(ofSize: 16)
 
-        // Configure Band Logo
         bandLogoImageView.image = UIImage(named: "Default_Profile_Picture")
         bandLogoImageView.backgroundColor = .black
         bandLogoImageView.contentMode = .scaleAspectFit
@@ -302,12 +266,10 @@ class StarRegisterView: UIView {
         bandLogoImageView.clipsToBounds = true
         addSubview(bandLogoImageView)
 
-        // Configure Upload Logo Button
         UIHelper.configureButton(uploadImageButton, title: "Upload Logo", font: defaultFont)
         uploadImageButton.contentEdgeInsets = UIEdgeInsets(top: 10, left: 20, bottom: 10, right: 20)
         addSubview(uploadImageButton)
 
-        // Configure Labels and Buttons
         UIHelper.configureLabel(bandNameLabel, text: "Band Name", font: defaultFont)
         addSubview(bandNameLabel)
         addSubview(bandNameTextField)
@@ -435,7 +397,6 @@ class StarRegisterView: UIView {
         addGenreButton.addTarget(self, action: #selector(didTapAddGenre), for: .touchUpInside)
         registerButton.addTarget(self, action: #selector(didTapRegister), for: .touchUpInside)
     }
-
 
     @objc private func didTapUploadLogo() {
         NotificationCenter.default.post(name: NSNotification.Name("UploadLogoTapped"), object: nil)

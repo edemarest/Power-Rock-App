@@ -2,10 +2,13 @@ import UIKit
 import FirebaseFirestore
 import FirebaseAuth
 
-// MARK: - CreateWorkoutViewController
-class CreateWorkoutViewController: UIViewController {
+/**
+ `CreateWorkoutViewController` For creating and publishing a workout. Users can configure workout details, add sets, and publish the workout to Firestore.
+ */
+class CreateWorkoutViewController: UIViewController, CreateSetViewControllerDelegate, UITableViewDataSource, UITableViewDelegate {
 
     // MARK: - Properties
+    weak var delegate: CreateWorkoutViewControllerDelegate?
     var workoutTitle: String = ""
     var difficulty: Int = 1
     var sets: [WorkoutSet] = []
@@ -114,7 +117,7 @@ class CreateWorkoutViewController: UIViewController {
         fetchUserDetails()
     }
 
-    // MARK: - Setup Methods
+    // MARK: - Setup Navigation Bar
     private func setupNavigationBar() {
         navigationItem.title = "Create Workout"
         navigationController?.navigationBar.barTintColor = .black
@@ -124,6 +127,7 @@ class CreateWorkoutViewController: UIViewController {
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: publishButton)
     }
 
+    // MARK: - Setup Layout
     private func setupLayout() {
         view.addSubview(backgroundImageView)
         view.sendSubviewToBack(backgroundImageView)
@@ -168,43 +172,23 @@ class CreateWorkoutViewController: UIViewController {
         setsTableView.delegate = self
     }
 
-    // MARK: - Actions
+    // MARK: - Handle Back Action
     @objc private func backTapped() {
         navigationController?.popViewController(animated: true)
     }
 
+    // MARK: - Publish Workout
     @objc private func publishWorkout() {
-        // Ensure workout title is not empty
         guard let workoutTitle = workoutTitleTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !workoutTitle.isEmpty else {
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self else { return }
-                let alert = UIAlertController(
-                    title: "No Workout Name",
-                    message: "Please enter a name for your workout before publishing.",
-                    preferredStyle: .alert
-                )
-                alert.addAction(UIAlertAction(title: "OK", style: .default))
-                self.present(alert, animated: true)
-            }
+            showAlert(title: "No Workout Name", message: "Please enter a name for your workout before publishing.")
             return
         }
 
-        // Ensure there is at least one set
         if sets.isEmpty {
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self else { return }
-                let alert = UIAlertController(
-                    title: "No Sets Added",
-                    message: "Please add at least one set to your workout before publishing.",
-                    preferredStyle: .alert
-                )
-                alert.addAction(UIAlertAction(title: "OK", style: .default))
-                self.present(alert, animated: true)
-            }
+            showAlert(title: "No Sets Added", message: "Please add at least one set to your workout before publishing.")
             return
         }
 
-        // Proceed with publishing the workout
         self.workoutTitle = workoutTitle
         difficulty = difficultyPicker.selectedSegmentIndex + 1
 
@@ -217,11 +201,20 @@ class CreateWorkoutViewController: UIViewController {
             bandLogoUrl: bandLogoUrl
         )
 
-        saveWorkoutToFirestore(workout)
-        navigateToStarHomeScreen()
+        DataFetcher.addWorkoutToGlobal(workout: workout) { error in
+            if let error = error {
+                print("Error publishing workout: \(error.localizedDescription)")
+            } else {
+                DispatchQueue.main.async {
+                    self.delegate?.didPublishWorkout()
+                    self.navigateToStarHomeScreen()
+                }
+            }
+        }
     }
 
 
+    // MARK: - Navigate to Home
     private func navigateToStarHomeScreen() {
         if let navigationController = navigationController {
             for controller in navigationController.viewControllers {
@@ -233,27 +226,19 @@ class CreateWorkoutViewController: UIViewController {
         }
     }
 
-    private func saveWorkoutToFirestore(_ workout: Workout) {
-        let db = Firestore.firestore()
-        db.collection("workouts").addDocument(data: workout.toDict()) { error in
-            if let error = error {
-                print("Error adding workout: \(error.localizedDescription)")
-            } else {
-                print("Workout successfully added!")
-            }
-        }
-    }
-
+    // MARK: - Add New Set
     @objc private func addSet() {
         let createSetVC = CreateSetViewController()
         createSetVC.delegate = self
         navigationController?.pushViewController(createSetVC, animated: true)
     }
 
+    // MARK: - Change Difficulty
     @objc private func difficultyChanged() {
         difficulty = difficultyPicker.selectedSegmentIndex + 1
     }
 
+    // MARK: - Fetch User Details
     private func fetchUserDetails() {
         DataFetcher.fetchUserDetails { [weak self] bandName, genres, bandLogoUrl, error in
             guard let self = self else { return }
@@ -266,10 +251,14 @@ class CreateWorkoutViewController: UIViewController {
             self.bandLogoUrl = bandLogoUrl ?? "Default_Workout_Image"
         }
     }
-}
 
-// MARK: - UITableViewDataSource & UITableViewDelegate
-extension CreateWorkoutViewController: UITableViewDataSource, UITableViewDelegate {
+    // MARK: - Delegate Method for Adding Set
+    func didAddSet(_ set: WorkoutSet) {
+        sets.append(set)
+        setsTableView.reloadData()
+    }
+
+    // MARK: - TableView Data Source
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return sets.count
     }
@@ -284,12 +273,13 @@ extension CreateWorkoutViewController: UITableViewDataSource, UITableViewDelegat
         cell.clipsToBounds = true
         return cell
     }
-}
 
-// MARK: - CreateSetViewControllerDelegate
-extension CreateWorkoutViewController: CreateSetViewControllerDelegate {
-    func didAddSet(_ set: WorkoutSet) {
-        sets.append(set)
-        setsTableView.reloadData()
+    // MARK: - Show Alert
+    private func showAlert(title: String, message: String) {
+        DispatchQueue.main.async {
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(alert, animated: true)
+        }
     }
 }
