@@ -204,15 +204,11 @@ class FanRegisterView: UIView {
         // Configure buttons
         UIHelper.configureButton(addGenreButton, title: "+", font: defaultFont)
         addSubview(addGenreButton)
-
-        // Configure genresContainer
-        genresContainer.axis = .vertical
-        genresContainer.spacing = 8
+        
+        genresContainer.axis = .horizontal
         genresContainer.alignment = .leading
-        genresContainer.distribution = .fill
-        genresContainer.translatesAutoresizingMaskIntoConstraints = false
-        genresContainer.setContentHuggingPriority(.required, for: .vertical)
-        genresContainer.setContentCompressionResistancePriority(.required, for: .vertical)
+        genresContainer.distribution = .fillProportionally
+        genresContainer.spacing = 8
         addSubview(genresContainer)
 
         UIHelper.configureLabel(emailLabel, text: "Email", font: defaultFont)
@@ -256,9 +252,10 @@ class FanRegisterView: UIView {
             addGenreButton.widthAnchor.constraint(equalToConstant: 40),
             addGenreButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
             
-            genresContainer.topAnchor.constraint(equalTo: genresTextField.bottomAnchor, constant: 10),
+            genresContainer.topAnchor.constraint(equalTo: genresTextField.bottomAnchor, constant: 5),
             genresContainer.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             genresContainer.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            genresContainer.heightAnchor.constraint(greaterThanOrEqualToConstant: 20),
             
             emailLabel.topAnchor.constraint(equalTo: genresContainer.bottomAnchor, constant: 20),
             emailLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
@@ -295,10 +292,28 @@ class FanRegisterView: UIView {
               let password = passwordTextField.text else { return }
         delegate?.didTapFanRegisterButton(firstName: name, email: email, password: password, genres: genresArray)
     }
-
+    
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        UIApplication.shared.keyWindow?.rootViewController?.present(alert, animated: true)
+    }
+    
     @objc private func didTapAddGenre() {
-        guard let genre = genresTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !genre.isEmpty else {
-            print("Genre input is empty")
+        guard let genre = genresTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !genre.isEmpty else {
+            return
+        }
+
+        // Character limit check
+        guard genre.count <= 10 else {
+            showAlert(title: "Input Too Long", message: "Genres cannot exceed 10 characters.")
+            return
+        }
+
+        // Limit to 3 genres
+        guard genresArray.count < 3 else {
+            showAlert(title: "Limit Reached", message: "You can only add up to 3 genres.")
             return
         }
 
@@ -310,12 +325,11 @@ class FanRegisterView: UIView {
             font: UIFont.systemFont(ofSize: 14),
             backgroundColor: .white,
             textColor: .black,
-            cornerRadius: 8,
+            cornerRadius: 10,
             target: self,
             action: #selector(didTapRemoveGenre(_:))
         )
         genresContainer.addArrangedSubview(genreTag)
-        genresContainer.setNeedsLayout()
         genresContainer.layoutIfNeeded()
     }
 

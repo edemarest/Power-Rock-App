@@ -279,7 +279,9 @@ class StarRegisterView: UIView {
         UIHelper.configureButton(addMemberButton, title: "+", font: defaultFont)
         addSubview(addMemberButton)
 
-        membersContainer.axis = .vertical
+        membersContainer.axis = .horizontal
+        membersContainer.alignment = .leading
+        membersContainer.distribution = .fillProportionally
         membersContainer.spacing = 8
         addSubview(membersContainer)
 
@@ -290,7 +292,9 @@ class StarRegisterView: UIView {
         UIHelper.configureButton(addGenreButton, title: "+", font: defaultFont)
         addSubview(addGenreButton)
 
-        genresContainer.axis = .vertical
+        genresContainer.axis = .horizontal
+        genresContainer.alignment = .leading
+        genresContainer.distribution = .fillProportionally
         genresContainer.spacing = 8
         addSubview(genresContainer)
 
@@ -345,10 +349,11 @@ class StarRegisterView: UIView {
             addMemberButton.widthAnchor.constraint(equalToConstant: 40),
             addMemberButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
 
-            membersContainer.topAnchor.constraint(equalTo: membersTextField.bottomAnchor, constant: 10),
+            membersContainer.topAnchor.constraint(equalTo: membersTextField.bottomAnchor, constant: 5),
             membersContainer.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             membersContainer.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
-
+            membersContainer.heightAnchor.constraint(greaterThanOrEqualToConstant: 20),
+            
             genresLabel.topAnchor.constraint(equalTo: membersContainer.bottomAnchor, constant: 20),
             genresLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
 
@@ -361,10 +366,11 @@ class StarRegisterView: UIView {
             addGenreButton.widthAnchor.constraint(equalToConstant: 40),
             addGenreButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
 
-            genresContainer.topAnchor.constraint(equalTo: genresTextField.bottomAnchor, constant: 10),
+            genresContainer.topAnchor.constraint(equalTo: genresTextField.bottomAnchor, constant: 5),
             genresContainer.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             genresContainer.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
-
+            genresContainer.heightAnchor.constraint(greaterThanOrEqualToConstant: 20),
+            
             emailLabel.topAnchor.constraint(equalTo: genresContainer.bottomAnchor, constant: 20),
             emailLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
 
@@ -395,8 +401,30 @@ class StarRegisterView: UIView {
         registerButton.addTarget(self, action: #selector(didTapRegister), for: .touchUpInside)
     }
 
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        UIApplication.shared.keyWindow?.rootViewController?.present(alert, animated: true)
+    }
+    
     @objc private func didTapAddMember() {
-        guard let member = membersTextField.text, !member.isEmpty else { return }
+        guard let member = membersTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !member.isEmpty else {
+            return
+        }
+        
+        // Character limit check
+        guard member.count <= 10 else {
+            showAlert(title: "Input Too Long", message: "Member names cannot exceed 10 characters.")
+            return
+        }
+        
+        // Limit to 3 members
+        guard membersArray.count < 3 else {
+            showAlert(title: "Limit Reached", message: "You can only add up to 3 members.")
+            return
+        }
+
         membersArray.append(member)
         membersTextField.text = ""
 
@@ -410,10 +438,27 @@ class StarRegisterView: UIView {
             action: #selector(didTapRemoveMember(_:))
         )
         membersContainer.addArrangedSubview(memberTag)
+        membersContainer.layoutIfNeeded()
     }
 
     @objc private func didTapAddGenre() {
-        guard let genre = genresTextField.text, !genre.isEmpty else { return }
+        guard let genre = genresTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !genre.isEmpty else {
+            return
+        }
+
+        // Character limit check
+        guard genre.count <= 10 else {
+            showAlert(title: "Input Too Long", message: "Genres cannot exceed 10 characters.")
+            return
+        }
+
+        // Limit to 3 genres
+        guard genresArray.count < 3 else {
+            showAlert(title: "Limit Reached", message: "You can only add up to 3 genres.")
+            return
+        }
+
         genresArray.append(genre)
         genresTextField.text = ""
 
@@ -427,7 +472,11 @@ class StarRegisterView: UIView {
             action: #selector(didTapRemoveGenre(_:))
         )
         genresContainer.addArrangedSubview(genreTag)
+        genresContainer.layoutIfNeeded()
     }
+
+
+
 
     @objc private func didTapRemoveMember(_ sender: UIButton) {
         guard let memberContainer = sender.superview else { return }

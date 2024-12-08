@@ -59,41 +59,10 @@
 ---
 
 ## TODO List
-
-### 1. **Implement Missing Screens**
-   - **EditWorkoutViewController**: **Star** users will be able to edit their workout details from the **WorkoutDetails** screen.
-   - **DoWorkoutViewController**: **Star** users will be able to complete the workout, checking off exercises as they go from the **WorkoutDetails** screen.
-   - **CompletedWorkoutViewController**: Displays the total **fan power** gained by the user after completing the workout, with a button to navigate back to the home screen.
    
-### 2. **Refine Input Verification & Add Cover Photo**
+### 1. **Refine Input Verification & Add Cover Photo**
    - Add band's cover photo to their workouts (right now nothing is done with the photo)
    - Make sure all input fields are validated before user moves on to next screen
    - Make sure all image uploads work and fall back on a default image
 
-### 3. **Add Fan Power Logic**
-   - **Stars**:  
-     - Track the number of times each workout is created and calculate the band's total fan power by adding up the values from all workouts created by the same band.
-   - **Fans**:  
-     - Track total power by each workout completed. The power for each workout is calculated as **difficulty x 100**.
-   
-### 4. **Stylize All Screens**
-   - Apply consistent styling across all screens to match the vibe of the app.  
-   - Incorporate images, where applicable, to enhance the user experience.
 
-### 5. **Remove Repeated Functions/Logic**
-   - Clean up the code by removing any repeated functions or logic.  
-   - Ensure the structure of each view is consistent, making the code easier to maintain.
-
----
-
-## Work Session 1 Notes 12/03/24
-
-### 1. **CreateWorkoutView Page**
-    - After you *Publish* a workout, it is not updated in the Home page when redirected, it is updated when you *Logout* and *Login*
-
-    
----
-## MaiAnh's Notes 12/04/24
-### 1. **EditWorkoutView Page**
-    - Right now only the title of a workout is editable —need to work on editing sets and their exercises
-    - Saving an edit works only when you *Logout* and *Login* (like in the **CreateWorkoutView Page**) AND it does not technically update the cell but creates another one and doesn't remove the original workout from the db
