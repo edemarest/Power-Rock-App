@@ -28,6 +28,17 @@ class CreateWorkoutViewController: UIViewController {
         return button
     }()
 
+    private let workoutNameLabel: UILabel = {
+        let label = UILabel()
+        UIHelper.configureLabel(
+            label,
+            text: "Choose a workout name",
+            font: UIFont.systemFont(ofSize: 16),
+            textColor: .white
+        )
+        return label
+    }()
+
     private let workoutTitleTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Enter Workout Title"
@@ -38,35 +49,31 @@ class CreateWorkoutViewController: UIViewController {
         textField.layer.cornerRadius = 5
         textField.attributedPlaceholder = NSAttributedString(
             string: "Enter Workout Title",
-            attributes: [NSAttributedString.Key.foregroundColor: UIColor.white]
+            attributes: [NSAttributedString.Key.foregroundColor: UIColor.gray]
         )
         return textField
+    }()
+
+    private let difficultyLabel: UILabel = {
+        let label = UILabel()
+        UIHelper.configureLabel(
+            label,
+            text: "Set workout difficulty",
+            font: UIFont.systemFont(ofSize: 16),
+            textColor: .white
+        )
+        return label
     }()
 
     private let difficultyPicker: UISegmentedControl = {
         let control = UISegmentedControl(items: ["1", "2", "3", "4", "5"])
         control.selectedSegmentIndex = 0
-        
-        // Set default (unselected) segment appearance
         control.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .normal)
         control.backgroundColor = .darkGray
-        
-        // Set selected segment appearance: black text and white background
         control.setTitleTextAttributes([.foregroundColor: UIColor.black], for: .selected)
-        let selectedImage = UIGraphicsImageRenderer(size: CGSize(width: 50, height: 30)).image { _ in
-            UIColor.white.setFill()
-            UIBezierPath(rect: CGRect(x: 0, y: 0, width: 50, height: 30)).fill()
-        }
-        control.setBackgroundImage(selectedImage, for: .selected, barMetrics: .default)
-
-        control.layer.cornerRadius = 5
-        control.clipsToBounds = true
-
         control.addTarget(self, action: #selector(difficultyChanged), for: .valueChanged)
-        
         return control
     }()
-
 
     private let addSetButton: UIButton = {
         let button = UIButton(type: .system)
@@ -92,8 +99,9 @@ class CreateWorkoutViewController: UIViewController {
     }()
 
     private let backgroundImageView: UIImageView = {
-        let imageView = UIImageView(image: UIImage(named: "Background_1"))
+        let imageView = UIImageView(image: UIImage(named: "Welcome_Background"))
         imageView.contentMode = .scaleAspectFill
+        imageView.alpha = 0.5
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()
@@ -120,7 +128,7 @@ class CreateWorkoutViewController: UIViewController {
         view.addSubview(backgroundImageView)
         view.sendSubviewToBack(backgroundImageView)
 
-        [workoutTitleTextField, difficultyPicker, addSetButton, setsTableView].forEach {
+        [workoutNameLabel, workoutTitleTextField, difficultyLabel, difficultyPicker, addSetButton, setsTableView].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
@@ -131,11 +139,19 @@ class CreateWorkoutViewController: UIViewController {
             backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
 
-            workoutTitleTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            workoutNameLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            workoutNameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            workoutNameLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+
+            workoutTitleTextField.topAnchor.constraint(equalTo: workoutNameLabel.bottomAnchor, constant: 5),
             workoutTitleTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             workoutTitleTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
 
-            difficultyPicker.topAnchor.constraint(equalTo: workoutTitleTextField.bottomAnchor, constant: 20),
+            difficultyLabel.topAnchor.constraint(equalTo: workoutTitleTextField.bottomAnchor, constant: 20),
+            difficultyLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            difficultyLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+
+            difficultyPicker.topAnchor.constraint(equalTo: difficultyLabel.bottomAnchor, constant: 5),
             difficultyPicker.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             difficultyPicker.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
 
@@ -158,7 +174,38 @@ class CreateWorkoutViewController: UIViewController {
     }
 
     @objc private func publishWorkout() {
-        workoutTitle = workoutTitleTextField.text ?? ""
+        // Ensure workout title is not empty
+        guard let workoutTitle = workoutTitleTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !workoutTitle.isEmpty else {
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                let alert = UIAlertController(
+                    title: "No Workout Name",
+                    message: "Please enter a name for your workout before publishing.",
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                self.present(alert, animated: true)
+            }
+            return
+        }
+
+        // Ensure there is at least one set
+        if sets.isEmpty {
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                let alert = UIAlertController(
+                    title: "No Sets Added",
+                    message: "Please add at least one set to your workout before publishing.",
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                self.present(alert, animated: true)
+            }
+            return
+        }
+
+        // Proceed with publishing the workout
+        self.workoutTitle = workoutTitle
         difficulty = difficultyPicker.selectedSegmentIndex + 1
 
         let workout = Workout(
@@ -171,7 +218,19 @@ class CreateWorkoutViewController: UIViewController {
         )
 
         saveWorkoutToFirestore(workout)
-        navigationController?.popToRootViewController(animated: true)
+        navigateToStarHomeScreen()
+    }
+
+
+    private func navigateToStarHomeScreen() {
+        if let navigationController = navigationController {
+            for controller in navigationController.viewControllers {
+                if controller is StarHomeViewController {
+                    navigationController.popToViewController(controller, animated: true)
+                    return
+                }
+            }
+        }
     }
 
     private func saveWorkoutToFirestore(_ workout: Workout) {

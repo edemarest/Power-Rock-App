@@ -1,5 +1,7 @@
 import UIKit
 import PhotosUI
+import FirebaseAuth
+import FirebaseFirestore
 
 // MARK: - StarRegisterViewDelegate Protocol
 protocol StarRegisterViewDelegate: AnyObject {
@@ -80,9 +82,84 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate {
     }
 
     func didTapStarRegisterButton(bandName: String, email: String, password: String, genres: [String], members: [String], bandLogo: UIImage?) {
-        let bandLogo = pickedImage ?? UIImage(named: "Default_Profile_Picture")
-        print("Register button tapped with image: \(bandLogo)")
-        // Implement registration logic as before
+        // Validation
+        if bandName.isEmpty {
+            showAlert(title: "Missing Information", message: "Please enter your band name.")
+            return
+        }
+        if email.isEmpty {
+            showAlert(title: "Missing Information", message: "Please enter your email.")
+            return
+        }
+        if password.isEmpty {
+            showAlert(title: "Missing Information", message: "Please enter your password.")
+            return
+        }
+        if genres.isEmpty {
+            showAlert(title: "Missing Information", message: "Please add at least one genre.")
+            return
+        }
+        if members.isEmpty {
+            showAlert(title: "Missing Information", message: "Please add at least one band member.")
+            return
+        }
+
+        // Firebase registration
+        Auth.auth().createUser(withEmail: email, password: password) { [weak self] authResult, error in
+            guard let self = self else { return }
+
+            if let error = error as NSError? {
+                switch AuthErrorCode(rawValue: error.code) {
+                case .emailAlreadyInUse:
+                    self.showAlert(title: "Registration Failed", message: "The email address is already in use.")
+                case .invalidEmail:
+                    self.showAlert(title: "Registration Failed", message: "The email address is invalid.")
+                default:
+                    self.showAlert(title: "Registration Failed", message: "An unexpected error occurred: \(error.localizedDescription)")
+                }
+                return
+            }
+
+            guard let uid = authResult?.user.uid else {
+                self.showAlert(title: "Error", message: "Unexpected error occurred. Please try again.")
+                return
+            }
+
+            self.saveUserData(uid: uid, bandName: bandName, email: email, genres: genres, members: members, bandLogo: bandLogo)
+        }
+    }
+
+    private func saveUserData(uid: String, bandName: String, email: String, genres: [String], members: [String], bandLogo: UIImage?) {
+        let userData: [String: Any] = [
+            "userType": "Star",
+            "bandName": bandName,
+            "email": email,
+            "genres": genres,
+            "members": members,
+            "bandLogoUrl": "default_band_logo_url" // Placeholder for now
+        ]
+
+        Firestore.firestore().collection("users").document(uid).setData(userData) { error in
+            if let error = error {
+                print("Error saving user data: \(error.localizedDescription)")
+                self.showAlert(title: "Error", message: "Failed to save user data. Please try again.")
+                return
+            }
+
+            print("Star registration successful!")
+            self.navigateToStarHome()
+        }
+    }
+
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+
+    private func navigateToStarHome() {
+        let starHomeVC = StarHomeViewController()
+        navigationController?.pushViewController(starHomeVC, animated: true)
     }
 
     // MARK: - Menu Setup
@@ -98,7 +175,6 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate {
         return UIMenu(title: "Select source", children: menuItems)
     }
 
-    // MARK: - Picking Logic
     private func pickUsingCamera() {
         let cameraController = UIImagePickerController()
         cameraController.sourceType = .camera

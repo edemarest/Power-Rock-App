@@ -15,7 +15,24 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
     weak var delegate: WorkoutDetailsDelegate?
 
     // MARK: - UI Elements
-    private let titleLabel = UILabel()
+    private let workoutNameLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.boldSystemFont(ofSize: 36) // Super large bold font
+        label.textColor = .white
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
+    private let difficultyLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 20)
+        label.textColor = .white
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
     private let bandNameLabel = UILabel()
     private let genresLabel = UILabel()
     private let setsTableView = UITableView()
@@ -32,7 +49,7 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
     private let addToMyWorkoutsButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor.systemRed
+        button.backgroundColor = UIColor.systemGreen
         button.layer.cornerRadius = 10
         button.translatesAutoresizingMaskIntoConstraints = false
         button.isHidden = true // Hidden until confirmed user is a Fan
@@ -45,11 +62,11 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
         button.backgroundColor = UIColor.systemRed
         button.layer.cornerRadius = 10
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.isHidden = true // Hidden until confirmed user is a Star
+        button.isHidden = true
         return button
     }()
     private let backgroundImageView: UIImageView = {
-        let imageView = UIImageView(image: UIImage(named: "WorkoutBackground"))
+        let imageView = UIImageView(image: UIImage(named: "Welcome_Background"))
         imageView.contentMode = .scaleAspectFill
         imageView.alpha = 0.3
         imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -68,7 +85,7 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
             populateWorkoutDetails(workout)
         }
     }
-    
+
     private func setupNavigationBar() {
         navigationController?.navigationBar.barTintColor = .black
         navigationController?.navigationBar.titleTextAttributes = [
@@ -91,7 +108,7 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
 
         UIHelper.configureLabel(
             bandNameLabel,
-            text: "Band: \(workout?.bandName ?? "Unknown")",
+            text: "",
             font: UIFont.systemFont(ofSize: 20),
             textColor: .white
         )
@@ -100,7 +117,7 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
 
         UIHelper.configureLabel(
             genresLabel,
-            text: "Genres: \(workout?.genres.joined(separator: ", ") ?? "None")",
+            text: "",
             font: UIFont.italicSystemFont(ofSize: 18),
             textColor: .white
         )
@@ -113,37 +130,14 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
         setsTableView.delegate = self
         setsTableView.backgroundColor = .clear
         setsTableView.translatesAutoresizingMaskIntoConstraints = false
-
-        UIHelper.configureButton(
-            doWorkoutButton,
-            title: "Do Workout",
-            font: UIFont.systemFont(ofSize: 18, weight: .bold),
-            backgroundColor: UIColor(red: 255/255, green: 69/255, blue: 0/255, alpha: 1.0),
-            textColor: .white
-        )
+        
+        // Add target actions for buttons
         doWorkoutButton.addTarget(self, action: #selector(handleDoWorkout), for: .touchUpInside)
-        doWorkoutButton.translatesAutoresizingMaskIntoConstraints = false
-
-        UIHelper.configureButton(
-            addToMyWorkoutsButton,
-            title: "Add to My Workouts",
-            font: UIFont.systemFont(ofSize: 18, weight: .bold),
-            backgroundColor: UIColor.systemGreen,
-            textColor: .white
-        )
         addToMyWorkoutsButton.addTarget(self, action: #selector(handleAddOrRemoveWorkout), for: .touchUpInside)
-        addToMyWorkoutsButton.translatesAutoresizingMaskIntoConstraints = false
-
-        UIHelper.configureButton(
-            deleteWorkoutButton,
-            title: "Delete Workout",
-            font: UIFont.systemFont(ofSize: 18, weight: .bold),
-            backgroundColor: UIColor.systemRed,
-            textColor: .white
-        )
         deleteWorkoutButton.addTarget(self, action: #selector(deleteWorkout), for: .touchUpInside)
-        deleteWorkoutButton.translatesAutoresizingMaskIntoConstraints = false
 
+        view.addSubview(workoutNameLabel)
+        view.addSubview(difficultyLabel)
         view.addSubview(bandNameLabel)
         view.addSubview(genresLabel)
         view.addSubview(setsTableView)
@@ -152,24 +146,37 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
         view.addSubview(deleteWorkoutButton)
 
         NSLayoutConstraint.activate([
-            bandNameLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            workoutNameLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            workoutNameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            workoutNameLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+
+            difficultyLabel.topAnchor.constraint(equalTo: workoutNameLabel.bottomAnchor, constant: 10),
+            difficultyLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            difficultyLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+
+            bandNameLabel.topAnchor.constraint(equalTo: difficultyLabel.bottomAnchor, constant: 20),
             bandNameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             bandNameLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+
             genresLabel.topAnchor.constraint(equalTo: bandNameLabel.bottomAnchor, constant: 10),
             genresLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             genresLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+
             setsTableView.topAnchor.constraint(equalTo: genresLabel.bottomAnchor, constant: 20),
             setsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
             setsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
             setsTableView.bottomAnchor.constraint(equalTo: doWorkoutButton.topAnchor, constant: -20),
+
             doWorkoutButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             doWorkoutButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             doWorkoutButton.heightAnchor.constraint(equalToConstant: 50),
             doWorkoutButton.bottomAnchor.constraint(equalTo: addToMyWorkoutsButton.topAnchor, constant: -10),
+
             addToMyWorkoutsButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             addToMyWorkoutsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             addToMyWorkoutsButton.heightAnchor.constraint(equalToConstant: 50),
             addToMyWorkoutsButton.bottomAnchor.constraint(equalTo: deleteWorkoutButton.topAnchor, constant: -10),
+
             deleteWorkoutButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             deleteWorkoutButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             deleteWorkoutButton.heightAnchor.constraint(equalToConstant: 50),
@@ -179,6 +186,8 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
 
     // MARK: - Populate Workout Details
     private func populateWorkoutDetails(_ workout: Workout) {
+        workoutNameLabel.text = workout.title
+        difficultyLabel.text = "Difficulty: \(workout.difficulty)"
         bandNameLabel.text = "Band: \(workout.bandName)"
         genresLabel.text = "Genres: \(workout.genres.joined(separator: ", "))"
         sets = workout.sets
@@ -300,11 +309,30 @@ class WorkoutDetailsView: UIViewController, UITableViewDataSource, UITableViewDe
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return sets.count
     }
-    
+
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "setCell", for: indexPath)
         let set = sets[indexPath.row]
-        cell.textLabel?.text = "Set \(indexPath.row + 1): \(set.exercises.count) exercises"
+
+        // Configure the cell for multiple lines
+        cell.textLabel?.numberOfLines = 0
+        cell.textLabel?.text = formatSetDetails(set, index: indexPath.row + 1)
+
+        // Style the cell
+        cell.backgroundColor = .clear
+        cell.textLabel?.textColor = .white
+        cell.textLabel?.font = UIFont.systemFont(ofSize: 16)
+        cell.layer.cornerRadius = 10
+        cell.clipsToBounds = true
+        cell.selectionStyle = .none // Disable tap functionality
         return cell
+    }
+
+    private func formatSetDetails(_ set: WorkoutSet, index: Int) -> String {
+        var details = "Set \(index): \(set.exercises.count) Exercises\n"
+        for exercise in set.exercises {
+            details += "• \(exercise.name) (x\(exercise.reps))\n"
+        }
+        return details.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

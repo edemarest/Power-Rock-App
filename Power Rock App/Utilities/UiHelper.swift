@@ -22,7 +22,7 @@ struct UIHelper {
         font: UIFont = UIFont.systemFont(ofSize: 16),
         backgroundColor: UIColor = .darkGray,
         textColor: UIColor = .white,
-        placeholderColor: UIColor = .white,
+        placeholderColor: UIColor = .gray,
         cornerRadius: CGFloat = 5
     ) -> UITextField {
         let textField = UITextField()
@@ -67,52 +67,53 @@ struct UIHelper {
     }
     
     // Create a tag label with a removable button
-    static func createTagLabel(
-        with text: String,
-        font: UIFont,
-        backgroundColor: UIColor = .white,
-        textColor: UIColor = .black,
-        cornerRadius: CGFloat = 10,
-        target: Any?,
-        action: Selector
-    ) -> UIView {
-        let container = UIView()
-        container.backgroundColor = backgroundColor
-        container.layer.cornerRadius = cornerRadius
-        container.clipsToBounds = true
-        
-        let label = UILabel()
-        label.text = text
-        label.font = font
-        label.textColor = textColor
-        label.backgroundColor = .clear
-        label.textAlignment = .center
-        
-        let removeButton = UIButton(type: .system)
-        removeButton.setTitle("X", for: .normal)
-        removeButton.setTitleColor(.black, for: .normal)
-        removeButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
-        removeButton.backgroundColor = .clear
-        removeButton.addTarget(target, action: action, for: .touchUpInside)
-        
-        container.addSubview(label)
-        container.addSubview(removeButton)
-        
-        label.translatesAutoresizingMaskIntoConstraints = false
-        removeButton.translatesAutoresizingMaskIntoConstraints = false
-        container.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 10),
-            label.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+        static func createTagLabel(
+            with text: String,
+            font: UIFont,
+            backgroundColor: UIColor = .white,
+            textColor: UIColor = .black,
+            cornerRadius: CGFloat = 10,
+            target: Any?,
+            action: Selector
+        ) -> UIView {
+            let container = UIView()
+            container.backgroundColor = backgroundColor
+            container.layer.cornerRadius = cornerRadius
+            container.clipsToBounds = true
             
-            removeButton.leadingAnchor.constraint(equalTo: label.trailingAnchor, constant: 5),
-            removeButton.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -10),
-            removeButton.centerYAnchor.constraint(equalTo: container.centerYAnchor)
-        ])
-        
-        return container
-    }
+            let label = UILabel()
+            label.text = text
+            label.font = font
+            label.textColor = textColor
+            label.backgroundColor = .clear
+            label.textAlignment = .center
+            
+            let removeButton = UIButton(type: .system)
+            removeButton.setTitle("X", for: .normal)
+            removeButton.setTitleColor(.black, for: .normal)
+            removeButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
+            removeButton.backgroundColor = .clear
+            removeButton.addTarget(target, action: action, for: .touchUpInside)
+            
+            container.addSubview(label)
+            container.addSubview(removeButton)
+            
+            label.translatesAutoresizingMaskIntoConstraints = false
+            removeButton.translatesAutoresizingMaskIntoConstraints = false
+            // Do not set container.translatesAutoresizingMaskIntoConstraints = false here
+            
+            NSLayoutConstraint.activate([
+                label.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 10),
+                label.topAnchor.constraint(equalTo: container.topAnchor, constant: 5),
+                label.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -5),
+                
+                removeButton.leadingAnchor.constraint(equalTo: label.trailingAnchor, constant: 5),
+                removeButton.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -10),
+                removeButton.centerYAnchor.constraint(equalTo: label.centerYAnchor)
+            ])
+            
+            return container
+        }
     
     // Configure a button with an icon
     static func configureButtonWithIcon(

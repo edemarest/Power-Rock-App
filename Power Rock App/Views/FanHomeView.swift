@@ -16,8 +16,8 @@ class FanHomeViewController: UIViewController, FanHomeViewDelegate, SearchWorkou
             fanHomeView?.updateTotalPowerLabel(to: totalPower)
         }
     }
-    var fanGenres: [String] = []
-    var workouts: [Workout] = []
+    var fanGenres: [String] = [] // User's selected genres
+    var workouts: [Workout] = [] // Workouts in MyWorkouts
     private var fanHomeView: FanHomeView?
 
     // MARK: - View Lifecycle
@@ -26,9 +26,10 @@ class FanHomeViewController: UIViewController, FanHomeViewDelegate, SearchWorkou
         self.title = "My Workouts"
         setupNavigationBar()
         setupFanHomeView()
-        fetchUserGenres()
-        fetchUserWorkouts()
-        fetchPowerPoints()
+
+        fetchUserGenres() // Fetch genres
+        fetchUserWorkouts() // Fetch MyWorkouts
+        fetchPowerPoints() // Fetch power points
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -97,7 +98,9 @@ class FanHomeViewController: UIViewController, FanHomeViewDelegate, SearchWorkou
                 print("Error fetching user genres: \(error.localizedDescription)")
                 return
             }
-            self.fanGenres = genres ?? []
+
+            self.fanGenres = genres?.map { $0.lowercased() } ?? [] // Normalize genres to lowercase
+            print("Fetched user genres: \(self.fanGenres)")
         }
     }
 
@@ -108,7 +111,13 @@ class FanHomeViewController: UIViewController, FanHomeViewDelegate, SearchWorkou
                 print("Error fetching MyWorkouts: \(error.localizedDescription)")
                 return
             }
+
             self.workouts = workouts ?? []
+            print("Fetched MyWorkouts (\(self.workouts.count)):")
+            self.workouts.forEach { workout in
+                print("- \(workout.title) [Genres: \(workout.genres)]")
+            }
+
             DispatchQueue.main.async {
                 self.fanHomeView?.updateWorkouts(self.workouts)
             }

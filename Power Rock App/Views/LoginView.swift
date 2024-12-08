@@ -166,13 +166,13 @@ class LoginView: UIView {
     private func setupUI() {
         backgroundColor = .clear
 
-        let chalkdusterFont = UIFont(name: "Chalkduster", size: 16) ?? UIFont.systemFont(ofSize: 16)
+        let defaultFont = UIFont.systemFont(ofSize: 16)
 
         // Email Label
         UIHelper.configureLabel(
             emailLabel,
             text: "Enter your email:",
-            font: chalkdusterFont,
+            font: defaultFont,
             textColor: .white
         )
         addSubview(emailLabel)
@@ -180,7 +180,7 @@ class LoginView: UIView {
         // Email TextField
         emailTextField = UIHelper.createStyledTextField(
             placeholder: "Email",
-            font: chalkdusterFont
+            font: defaultFont
         )
         addSubview(emailTextField)
 
@@ -188,7 +188,7 @@ class LoginView: UIView {
         UIHelper.configureLabel(
             passwordLabel,
             text: "Enter your password:",
-            font: chalkdusterFont,
+            font: defaultFont,
             textColor: .white
         )
         addSubview(passwordLabel)
@@ -196,7 +196,7 @@ class LoginView: UIView {
         // Password TextField
         passwordTextField = UIHelper.createStyledTextField(
             placeholder: "Password",
-            font: chalkdusterFont
+            font: defaultFont
         )
         passwordTextField.isSecureTextEntry = true
         addSubview(passwordTextField)
@@ -205,7 +205,7 @@ class LoginView: UIView {
         UIHelper.configureButton(
             loginButton,
             title: "Login",
-            font: chalkdusterFont,
+            font: defaultFont,
             backgroundColor: .white,
             textColor: .black
         )
@@ -222,6 +222,7 @@ class LoginView: UIView {
         noteLabel.textAlignment = .center
         addSubview(noteLabel)
     }
+
 
     // MARK: - Setup Constraints
     private func setupConstraints() {

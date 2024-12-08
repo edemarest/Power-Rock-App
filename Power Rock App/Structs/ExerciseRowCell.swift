@@ -14,13 +14,11 @@ class ExerciseRowCell: UITableViewCell {
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
-        print("ExerciseRowCell initialized.")
     }
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupUI()
-        print("ExerciseRowCell initialized from storyboard.")
     }
 
     // MARK: - Setup UI
@@ -63,7 +61,6 @@ class ExerciseRowCell: UITableViewCell {
 
     // MARK: - Configuration
     func configure(exerciseName: String, reps: Int, isChecked: Bool) {
-        print("Configuring ExerciseRowCell with exercise: \(exerciseName), reps: \(reps), checked: \(isChecked)")
         exerciseLabel.text = exerciseName
         repsLabel.text = "x\(reps)"
         checkbox.isSelected = isChecked
@@ -72,7 +69,6 @@ class ExerciseRowCell: UITableViewCell {
     // MARK: - Actions
     @objc private func didTapCheckbox() {
         checkbox.isSelected.toggle()
-        print("Checkbox toggled. New state: \(checkbox.isSelected)")
         onCheckboxToggle?(checkbox.isSelected)
     }
 }

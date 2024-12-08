@@ -14,15 +14,49 @@ class DoWorkoutViewController: UIViewController {
     private let tableView = UITableView()
     private let finishButton = UIBarButtonItem(title: "Finish", style: .plain, target: nil, action: nil)
     private let congratulatoryLabel = UILabel()
+    private let backgroundImageView: UIImageView = {
+        let imageView = UIImageView(image: UIImage(named: "Welcome_Background"))
+        imageView.contentMode = .scaleAspectFill
+        imageView.alpha = 0.5
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    private let blackOverlayView: UIView = {
+        let overlay = UIView()
+        overlay.backgroundColor = .black
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        return overlay
+    }()
     
     // MARK: - View Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        addBackgroundWithOverlay() // Add background image and black overlay
         view.backgroundColor = .black
         setupNavigationBar()
         setupUI()
         setupData()
         ensurePowerPointsInitialized()
+    }
+    
+    // MARK: - Add Background with Overlay
+    private func addBackgroundWithOverlay() {
+        view.addSubview(backgroundImageView)
+        view.addSubview(blackOverlayView)
+        view.sendSubviewToBack(backgroundImageView)
+        view.sendSubviewToBack(blackOverlayView)
+
+        NSLayoutConstraint.activate([
+            blackOverlayView.topAnchor.constraint(equalTo: view.topAnchor),
+            blackOverlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            blackOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            blackOverlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+
+            backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
+            backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            backgroundImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
     }
     
     private func ensurePowerPointsInitialized() {
@@ -251,7 +285,7 @@ class SetCell: UITableViewCell {
 
     private func setupUI() {
         backgroundColor = .clear // Transparent background to avoid visible container background
-        contentView.backgroundColor = UIColor.black.withAlphaComponent(0.9) // Dark grey (almost black)
+        contentView.backgroundColor = UIColor.black.withAlphaComponent(0.4) // Dark grey (almost black)
         contentView.layer.cornerRadius = 10
         contentView.layer.masksToBounds = true
 
@@ -323,7 +357,7 @@ class ExerciseCell: UIView {
     }
 
     private func setupUI() {
-        backgroundColor = UIColor.black.withAlphaComponent(0.9) // Dark grey (almost black)
+        backgroundColor = UIColor.black.withAlphaComponent(0.8) // Dark grey (almost black)
         layer.cornerRadius = 5
         layer.masksToBounds = true
 

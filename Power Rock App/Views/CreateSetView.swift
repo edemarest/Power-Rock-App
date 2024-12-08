@@ -100,22 +100,12 @@ class CreateSetViewController: UIViewController, UITextFieldDelegate {
     // MARK: - View Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupNavigationBar()
-        setupLayout()
-        repsTextField.delegate = self // Assign delegate for input validation
+        setupUIElements()
     }
 
-    // MARK: - Setup Methods
-    private func setupNavigationBar() {
-        navigationItem.title = "Create Set"
-        navigationController?.navigationBar.barTintColor = .black
-        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
-        navigationController?.navigationBar.tintColor = .white
-        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Back", style: .plain, target: self, action: #selector(backTapped))
-        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: saveSetButton)
-    }
-
-    private func setupLayout() {
+    // MARK: - UI Setup
+    private func setupUIElements() {
+        // Add subviews
         view.addSubview(blackOverlayView)
         view.addSubview(backgroundImageView)
         view.sendSubviewToBack(backgroundImageView)
@@ -126,6 +116,24 @@ class CreateSetViewController: UIViewController, UITextFieldDelegate {
             view.addSubview($0)
         }
 
+        // Add button targets
+        addExerciseButton.addTarget(self, action: #selector(addExercise), for: .touchUpInside)
+        saveSetButton.addTarget(self, action: #selector(saveSet), for: .touchUpInside)
+
+        // Assign delegate for table view and text field
+        exercisesTableView.dataSource = self
+        exercisesTableView.delegate = self
+        repsTextField.delegate = self
+
+        // Navigation setup
+        navigationItem.title = "Create Set"
+        navigationController?.navigationBar.barTintColor = .black
+        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navigationController?.navigationBar.tintColor = .white
+        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Back", style: .plain, target: self, action: #selector(backTapped))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: saveSetButton)
+
+        // Constraints
         NSLayoutConstraint.activate([
             blackOverlayView.topAnchor.constraint(equalTo: view.topAnchor),
             blackOverlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -158,18 +166,6 @@ class CreateSetViewController: UIViewController, UITextFieldDelegate {
             exercisesTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             exercisesTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -20)
         ])
-
-        exercisesTableView.dataSource = self
-        exercisesTableView.delegate = self
-    }
-
-    // MARK: - UITextFieldDelegate
-    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        if textField == repsTextField {
-            // Only allow numbers in repsTextField
-            return CharacterSet.decimalDigits.isSuperset(of: CharacterSet(charactersIn: string))
-        }
-        return true
     }
 
     // MARK: - Actions
@@ -189,6 +185,18 @@ class CreateSetViewController: UIViewController, UITextFieldDelegate {
     }
 
     @objc private func saveSet() {
+        if exercises.isEmpty {
+            let alert = UIAlertController(
+                title: "No Exercises Added",
+                message: "Please add at least one exercise to the set before saving.",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            present(alert, animated: true, completion: nil)
+            return
+        }
+
+        // Create and save the set if there are exercises
         let newSet = WorkoutSet(exercises: exercises)
         delegate?.didAddSet(newSet)
         navigationController?.popViewController(animated: true)
@@ -221,4 +229,3 @@ extension CreateSetViewController: UITableViewDataSource, UITableViewDelegate {
         exercisesTableView.reloadData()
     }
 }
-

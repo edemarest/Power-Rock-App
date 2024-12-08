@@ -58,21 +58,23 @@ struct DataFetcher {
         let db = Firestore.firestore()
         db.collection("workouts").getDocuments(source: .default) { snapshot, error in
             if let error = error {
-                print("Error fetching documents: \(error.localizedDescription)")
+                print("Error fetching workouts from Firestore: \(error.localizedDescription)")
                 completion(nil, error)
                 return
             }
 
             guard let documents = snapshot?.documents else {
+                print("No documents found in the workouts collection.")
                 completion(nil, NSError(domain: "Firestore", code: 0, userInfo: [NSLocalizedDescriptionKey: "No workout data found"]))
                 return
             }
 
+            print("Fetched \(documents.count) workout documents.")
             var allWorkouts: [Workout] = []
-            let group = DispatchGroup() // To handle async calls for fetching bandLogoUrl
 
             for document in documents {
                 let data = document.data()
+                print("Workout Data: \(data)") // Log the raw data
 
                 if let bandName = data["bandName"] as? String,
                    let genres = data["genres"] as? [String],
@@ -95,32 +97,21 @@ struct DataFetcher {
                         }
                     }
 
-                    var workout = Workout(
+                    let workout = Workout(
                         bandName: bandName,
                         genres: genres,
                         title: title,
                         difficulty: difficulty,
-                        sets: sets,
-                        bandLogoUrl: nil // Placeholder for now
+                        sets: sets
                     )
-
-                    group.enter()
-                    // Fetch bandLogoUrl from the bands collection
-                    db.collection("bands").whereField("bandName", isEqualTo: bandName).getDocuments { bandSnapshot, error in
-                        if let bandData = bandSnapshot?.documents.first?.data(),
-                           let bandLogoUrl = bandData["bandLogoUrl"] as? String {
-                            workout.bandLogoUrl = bandLogoUrl
-                        }
-                        group.leave()
-                    }
-
                     allWorkouts.append(workout)
+                } else {
+                    print("Invalid workout document: \(data)") // Log invalid documents
                 }
             }
 
-            group.notify(queue: .main) {
-                completion(allWorkouts, nil)
-            }
+            print("Total valid workouts fetched: \(allWorkouts.count)")
+            completion(allWorkouts, nil)
         }
     }
 
@@ -365,33 +356,41 @@ struct DataFetcher {
 
     // Add initial workouts to MyWorkouts based on user's genres
     static func addInitialWorkoutsToMyWorkouts(uid: String, genres: [String], completion: @escaping (Error?) -> Void) {
-        let db = Firestore.firestore()
+        print("Fetching all workouts to match user genres: \(genres)")
 
-        // Fetch all workouts
         fetchWorkouts { workouts, error in
             if let error = error {
+                print("Error fetching workouts: \(error.localizedDescription)")
                 completion(error)
                 return
             }
 
             guard let workouts = workouts else {
+                print("No workouts found in database.")
                 completion(NSError(domain: "DataFetcher", code: 0, userInfo: [NSLocalizedDescriptionKey: "No workouts found"]))
                 return
             }
 
-            // Filter workouts by genres
+            // Normalize genres for matching
+            let normalizedGenres = Set(genres.map { $0.lowercased() })
+            print("Normalized user genres: \(normalizedGenres)")
+
             let matchingWorkouts = workouts.filter { workout in
-                !Set(workout.genres).isDisjoint(with: genres)
+                let workoutGenres = Set(workout.genres.map { $0.lowercased() })
+                let matches = !workoutGenres.isDisjoint(with: normalizedGenres)
+                print("Checking workout: \(workout.title), Genres: \(workout.genres), Matches: \(matches)")
+                return matches
             }
 
             if matchingWorkouts.isEmpty {
-                print("No matching workouts found for user's genres.")
+                print("No matching workouts found for user genres.")
             } else {
-                print("Workouts matching user's genres:")
+                print("Found \(matchingWorkouts.count) matching workouts:")
                 matchingWorkouts.forEach { print("- \($0.title)") }
             }
 
-            // Add matching workouts to MyWorkouts sub-collection
+            // Save matching workouts to MyWorkouts
+            let db = Firestore.firestore()
             let myWorkoutsRef = db.collection("users").document(uid).collection("MyWorkouts")
             let batch = db.batch()
 
@@ -400,9 +399,17 @@ struct DataFetcher {
                 batch.setData(workout.toDict(), forDocument: docRef)
             }
 
-            batch.commit(completion: completion)
+            batch.commit { error in
+                if let error = error {
+                    print("Error saving workouts to MyWorkouts: \(error.localizedDescription)")
+                } else {
+                    print("Successfully added \(matchingWorkouts.count) workouts to MyWorkouts.")
+                }
+                completion(error)
+            }
         }
     }
+
     
     static func ensurePowerPointsForFan(completion: @escaping (Error?) -> Void) {
         guard let uid = Auth.auth().currentUser?.uid else {

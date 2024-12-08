@@ -14,26 +14,11 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         self.title = "Register as a Fan"
-        setupNavbar()
         setupBackground()
         setupFanRegisterView()
     }
 
-    private func setupNavbar() {
-        let appearance = UINavigationBarAppearance()
-        appearance.backgroundColor = UIColor.black.withAlphaComponent(0.8)
-        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
-        navigationController?.navigationBar.tintColor = .white
-    }
-
     private func setupBackground() {
-        let baseView = UIView()
-        baseView.backgroundColor = .black
-        baseView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(baseView)
-
         let backgroundImageView = UIImageView(image: UIImage(named: "Background_1"))
         backgroundImageView.contentMode = .scaleAspectFill
         backgroundImageView.alpha = 0.6
@@ -41,11 +26,6 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
         view.addSubview(backgroundImageView)
 
         NSLayoutConstraint.activate([
-            baseView.topAnchor.constraint(equalTo: view.topAnchor),
-            baseView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            baseView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            baseView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-
             backgroundImageView.topAnchor.constraint(equalTo: view.topAnchor),
             backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             backgroundImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -67,22 +47,49 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
         ])
     }
 
+    // MARK: - FanRegisterViewDelegate Methods
     func didTapFanBackButton() {
         navigationController?.popViewController(animated: true)
     }
 
     func didTapFanRegisterButton(firstName: String, email: String, password: String, genres: [String]) {
+        // Field validation
+        if firstName.isEmpty {
+            showAlert(title: "Missing Information", message: "Please enter your name.")
+            return
+        }
+        if email.isEmpty {
+            showAlert(title: "Missing Information", message: "Please enter your email.")
+            return
+        }
+        if password.isEmpty {
+            showAlert(title: "Missing Information", message: "Please enter your password.")
+            return
+        }
+        if genres.isEmpty {
+            showAlert(title: "Missing Information", message: "Please add at least one genre.")
+            return
+        }
+
+        // Firebase registration
         Auth.auth().createUser(withEmail: email, password: password) { [weak self] authResult, error in
             guard let self = self else { return }
 
-            if let error = error {
-                self.showAlert(message: "Registration failed. Please try again.")
-                print("Error: \(error.localizedDescription)")
+            if let error = error as NSError? {
+                // Handle specific Firebase error codes
+                switch AuthErrorCode(rawValue: error.code) {
+                case .emailAlreadyInUse:
+                    self.showAlert(title: "Registration Failed", message: "The email address is already in use.")
+                case .invalidEmail:
+                    self.showAlert(title: "Registration Failed", message: "The email address is invalid.")
+                default:
+                    self.showAlert(title: "Registration Failed", message: "An unexpected error occurred: \(error.localizedDescription)")
+                }
                 return
             }
 
             guard let uid = authResult?.user.uid else {
-                self.showAlert(message: "Unexpected error occurred. Please try again.")
+                self.showAlert(title: "Error", message: "Unexpected error occurred. Please try again.")
                 return
             }
 
@@ -91,25 +98,37 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
     }
 
     private func saveUserData(uid: String, firstName: String, genres: [String]) {
-        DataFetcher.saveUserData(uid: uid, firstName: firstName, genres: genres) { [weak self] error in
+        let userData: [String: Any] = [
+            "userType": "Fan",
+            "firstName": firstName,
+            "genres": genres
+        ]
+
+        Firestore.firestore().collection("users").document(uid).setData(userData) { error in
             if let error = error {
-                self?.showAlert(message: "Failed to save user data. Please try again.")
                 print("Error saving user data: \(error.localizedDescription)")
+                self.showAlert(title: "Error", message: "Failed to save user data. Please try again.")
                 return
             }
 
-            // Add initial workouts to MyWorkouts
+            print("User data saved. Adding initial workouts...")
+            
+            // Add initial workouts based on genres
             DataFetcher.addInitialWorkoutsToMyWorkouts(uid: uid, genres: genres) { error in
                 if let error = error {
                     print("Error adding initial workouts: \(error.localizedDescription)")
+                    self.showAlert(title: "Error", message: "Failed to initialize workouts. Please try again.")
+                    return
                 }
-                self?.navigateToFanHome()
+
+                print("Initial workouts added successfully!")
+                self.navigateToFanHome()
             }
         }
     }
 
-    private func showAlert(message: String) {
-        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
@@ -119,6 +138,7 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
         navigationController?.pushViewController(fanHomeVC, animated: true)
     }
 }
+
 
 // MARK: - FanRegisterView
 class FanRegisterView: UIView {
@@ -187,8 +207,14 @@ class FanRegisterView: UIView {
         UIHelper.configureButton(addGenreButton, title: "+", font: edgyFont)
         addSubview(addGenreButton)
         
+        // Configure genresContainer
         genresContainer.axis = .vertical
         genresContainer.spacing = 8
+        genresContainer.alignment = .leading
+        genresContainer.distribution = .fill
+        genresContainer.translatesAutoresizingMaskIntoConstraints = false
+        genresContainer.setContentHuggingPriority(.required, for: .vertical)
+        genresContainer.setContentCompressionResistancePriority(.required, for: .vertical)
         addSubview(genresContainer)
         
         UIHelper.configureLabel(emailLabel, text: "Email", font: edgyFont)
@@ -266,6 +292,7 @@ class FanRegisterView: UIView {
         addGenreButton.addTarget(self, action: #selector(didTapAddGenre), for: .touchUpInside)
     }
 
+    // MARK: - Button Actions
     @objc private func didTapRegister() {
         guard let name = nameTextField.text,
               let email = emailTextField.text,
@@ -274,10 +301,16 @@ class FanRegisterView: UIView {
     }
 
     @objc private func didTapAddGenre() {
-        guard let genre = genresTextField.text, !genre.isEmpty else { return }
+        guard let genre = genresTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !genre.isEmpty else {
+            print("Genre input is empty")
+            return
+        }
+
+        // Add genre to the genres array
         genresArray.append(genre)
         genresTextField.text = ""
 
+        // Create and style a tag label
         let genreTag = UIHelper.createTagLabel(
             with: genre,
             font: UIFont.systemFont(ofSize: 14),
@@ -287,7 +320,15 @@ class FanRegisterView: UIView {
             target: self,
             action: #selector(didTapRemoveGenre(_:))
         )
+
+        // Add tag to the stack view
         genresContainer.addArrangedSubview(genreTag)
+
+        // Update layout for genresContainer and its parent view
+        genresContainer.setNeedsLayout()
+        genresContainer.layoutIfNeeded()
+        self.setNeedsLayout()
+        self.layoutIfNeeded()
     }
 
     @objc private func didTapRemoveGenre(_ sender: UIButton) {
@@ -299,5 +340,7 @@ class FanRegisterView: UIView {
         }
         genresContainer.removeArrangedSubview(genreContainer)
         genreContainer.removeFromSuperview()
+        genresContainer.setNeedsLayout()
+        genresContainer.layoutIfNeeded()
     }
 }
