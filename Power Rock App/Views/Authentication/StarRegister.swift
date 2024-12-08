@@ -256,7 +256,7 @@ class StarRegisterView: UIView {
 
         let defaultFont = UIFont.systemFont(ofSize: 16)
 
-        bandLogoImageView.image = UIImage(named: "Default_Profile_Picture")
+        bandLogoImageView.image = UIImage(named: "Default_Workout_Icon")
         bandLogoImageView.backgroundColor = .black
         bandLogoImageView.contentMode = .scaleAspectFit
         bandLogoImageView.layer.borderWidth = 1
