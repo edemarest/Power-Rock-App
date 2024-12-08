@@ -2,19 +2,23 @@ import UIKit
 import FirebaseAuth
 import FirebaseFirestore
 
-// MARK: - MainVC
-// View controller for handling the main flow, checking authentication, and navigating based on user type
+/**
+ `MainVC` Handles the main flow, checks user authentication, and navigates based on user type.
+ */
 class MainVC: UIViewController {
 
+    // MARK: - Properties
     let db = Firestore.firestore()
     var userTitle: String?
     private var isAuthenticating = false
 
+    // MARK: - View Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         checkAuthentication()
     }
 
+    // MARK: - Authentication
     private func checkAuthentication() {
         guard !isAuthenticating else {
             print("DEBUG: Already authenticating, skipping.")
@@ -50,7 +54,8 @@ class MainVC: UIViewController {
             }
         }
     }
-    
+
+    // MARK: - User Details
     private func fetchUserDetails(for uid: String) {
         db.collection("users").document(uid).getDocument { [weak self] snapshot, error in
             guard let self = self else { return }
@@ -71,6 +76,7 @@ class MainVC: UIViewController {
         }
     }
 
+    // MARK: - Navigation
     private func navigateBasedOnUserType(_ userType: String) {
         if userType == "Star" {
             navigateToStarHomeView()

@@ -1,9 +1,11 @@
 import UIKit
 
-// Represents a live set during the workout
+/**
+ `LiveSet` represents a live set during the workout, containing exercises and completion state.
+ */
 struct LiveSet {
-    var exercises: [(name: String, reps: Int, isChecked: Bool)]  // Each exercise has a name, reps, and checkbox state
+    var exercises: [(name: String, reps: Int, isChecked: Bool)]
     var isCompleted: Bool {
-        return exercises.allSatisfy { $0.isChecked }  // Set is completed if all exercises are checked
+        return exercises.allSatisfy { $0.isChecked }
     }
 }

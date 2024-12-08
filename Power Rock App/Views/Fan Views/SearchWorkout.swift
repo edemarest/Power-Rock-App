@@ -24,7 +24,6 @@ class SearchWorkoutViewController: UIViewController, UITableViewDataSource,
     private let backgroundImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(named: "Background_3")
-        imageView.alpha = 0.4
         imageView.contentMode = .scaleAspectFill
         return imageView
     }()

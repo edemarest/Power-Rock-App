@@ -19,7 +19,6 @@ class FanRegisterViewController: UIViewController, FanRegisterViewDelegate {
     private func setupBackground() {
         let backgroundImageView = UIImageView(image: UIImage(named: "Background_1"))
         backgroundImageView.contentMode = .scaleAspectFill
-        backgroundImageView.alpha = 0.6
         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(backgroundImageView)
 

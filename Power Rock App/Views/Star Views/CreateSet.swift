@@ -69,7 +69,6 @@ class CreateSetViewController: UIViewController, UITextFieldDelegate, UITableVie
         let imageView = UIImageView(image: UIImage(named: "Welcome_Background"))
         imageView.contentMode = .scaleAspectFill
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.alpha = 0.4
         return imageView
     }()
 

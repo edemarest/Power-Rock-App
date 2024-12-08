@@ -65,7 +65,6 @@ class WorkoutDetailsViewController: UIViewController, UITableViewDataSource, UIT
     private let backgroundImageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(named: "Welcome_Background"))
         imageView.contentMode = .scaleAspectFill
-        imageView.alpha = 0.3
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()

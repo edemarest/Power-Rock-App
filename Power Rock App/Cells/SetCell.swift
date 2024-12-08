@@ -1,21 +1,23 @@
 import UIKit
 
-/// A custom table view cell representing a workout set, allowing users to complete exercises and mark the set as complete.
+/**
+ `SetCell` custom table view cell representing a workout set, allowing users to complete exercises and mark the set as complete.
+ */
 class SetCell: UITableViewCell {
-    
+
     // MARK: - Properties
     private let setLabel = UILabel()
     private let completeButton = UIButton(type: .system)
     private var exerciseViews: [ExerciseCell] = []
     private var set: WorkoutSet?
     weak var delegate: SetCellDelegate?
-    private var exerciseCompletion: [Bool] = [] // Tracks completion of each exercise
-    
+    private var exerciseCompletion: [Bool] = []
+
     // MARK: - Initializers
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
-        selectionStyle = .none // Disable cell selection
+        selectionStyle = .none
     }
 
     required init?(coder: NSCoder) {
@@ -28,11 +30,9 @@ class SetCell: UITableViewCell {
         setLabel.text = "Set \(setIndex)"
         exerciseCompletion = Array(repeating: false, count: set.exercises.count)
 
-        // Clear existing exercise views
         exerciseViews.forEach { $0.removeFromSuperview() }
         exerciseViews.removeAll()
-        
-        // Add exercise views dynamically
+
         var lastView: UIView = setLabel
         for (index, exercise) in set.exercises.enumerated() {
             let exerciseCell = ExerciseCell()
@@ -45,7 +45,7 @@ class SetCell: UITableViewCell {
             exerciseCell.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview(exerciseCell)
             exerciseViews.append(exerciseCell)
-            
+
             NSLayoutConstraint.activate([
                 exerciseCell.topAnchor.constraint(equalTo: lastView.bottomAnchor, constant: 10),
                 exerciseCell.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 10),
@@ -54,14 +54,13 @@ class SetCell: UITableViewCell {
             ])
             lastView = exerciseCell
         }
-        
-        // Position the complete button
+
         NSLayoutConstraint.activate([
             completeButton.topAnchor.constraint(equalTo: lastView.bottomAnchor, constant: 10),
             completeButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -10),
             completeButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10)
         ])
-        
+
         completeButton.isEnabled = false
         updateCompleteButtonState()
     }
@@ -73,13 +72,11 @@ class SetCell: UITableViewCell {
         contentView.layer.cornerRadius = 10
         contentView.layer.masksToBounds = true
 
-        // Configure set label
         setLabel.font = UIFont.boldSystemFont(ofSize: 18)
         setLabel.textColor = .white
         setLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(setLabel)
 
-        // Configure complete button
         completeButton.setTitle("Complete", for: .normal)
         completeButton.setTitleColor(UIColor(red: 255/255, green: 69/255, blue: 0/255, alpha: 1.0), for: .normal)
         completeButton.backgroundColor = .clear
@@ -87,7 +84,6 @@ class SetCell: UITableViewCell {
         completeButton.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(completeButton)
 
-        // Add constraints for the set label
         NSLayoutConstraint.activate([
             setLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
             setLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 10),

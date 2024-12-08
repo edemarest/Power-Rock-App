@@ -157,7 +157,6 @@ class StarHomeView: UIView, UITableViewDelegate, UITableViewDataSource {
 
         backgroundImageView.image = UIImage(named: "Background_2")
         backgroundImageView.contentMode = .scaleAspectFill
-        backgroundImageView.alpha = 0.4
         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(backgroundImageView)
         sendSubviewToBack(backgroundImageView)

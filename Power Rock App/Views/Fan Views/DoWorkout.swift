@@ -20,7 +20,6 @@ class DoWorkoutViewController: UIViewController, UITableViewDataSource, UITableV
     private let backgroundImageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(named: "Welcome_Background"))
         imageView.contentMode = .scaleAspectFill
-        imageView.alpha = 0.5
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()

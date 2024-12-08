@@ -208,7 +208,6 @@ class FanHomeView: UIView, UITableViewDataSource, UITableViewDelegate {
         backgroundColor = .black
 
         backgroundImageView.image = UIImage(named: "Background_2")
-        backgroundImageView.alpha = 0.4
         backgroundImageView.contentMode = .scaleAspectFill
         addSubview(backgroundImageView)
 

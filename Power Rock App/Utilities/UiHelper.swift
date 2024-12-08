@@ -1,6 +1,8 @@
 import UIKit
 
-// MARK: - UIHelper
+/**
+ `UIHelper` Creates custom UI elements.
+ */
 struct UIHelper {
 
     // MARK: - Gradients

@@ -37,7 +37,6 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate {
 
         let backgroundImageView = UIImageView(image: UIImage(named: "Background_2"))
         backgroundImageView.contentMode = .scaleAspectFill
-        backgroundImageView.alpha = 0.3
         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(backgroundImageView)
 

@@ -1,6 +1,9 @@
 import FirebaseFirestore
 import FirebaseAuth
 
+/**
+ `DataFetcher` provides static methods for fetching, adding, and manipulating user and workout data from Firestore.
+ */
 struct DataFetcher {
     // Fetch user details
     static func fetchUserDetails(completion: @escaping (String?, [String]?, String?, Error?) -> Void) {

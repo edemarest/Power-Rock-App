@@ -1,6 +1,8 @@
 import UIKit
 
-
+/**
+ `SetTableViewCell` custom table view cell displaying a set of exercises, allowing completion tracking and marking the set as completed.
+ */
 class SetTableViewCell: UITableViewCell, UITableViewDataSource, UITableViewDelegate {
 
     // MARK: - Properties
@@ -8,8 +10,6 @@ class SetTableViewCell: UITableViewCell, UITableViewDataSource, UITableViewDeleg
     private var exercises: [(name: String, reps: Int, isChecked: Bool)] = []
     private var isCompleted = false
     private var setIndex: Int = 0
-
-    // UI Elements
     private let titleLabel = UILabel()
     private let innerTableView = UITableView()
     private let completeButton = UIButton()
@@ -27,12 +27,10 @@ class SetTableViewCell: UITableViewCell, UITableViewDataSource, UITableViewDeleg
     }
 
     private func setupUI() {
-        // Title Label
         titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(titleLabel)
 
-        // Inner TableView
         innerTableView.dataSource = self
         innerTableView.delegate = self
         innerTableView.register(ExerciseRowCell.self, forCellReuseIdentifier: "ExerciseRowCell")
@@ -40,11 +38,9 @@ class SetTableViewCell: UITableViewCell, UITableViewDataSource, UITableViewDeleg
         innerTableView.isScrollEnabled = false
         contentView.addSubview(innerTableView)
 
-        // Height Constraint for Inner TableView
         innerTableHeightConstraint = innerTableView.heightAnchor.constraint(equalToConstant: 0)
         innerTableHeightConstraint.isActive = true
 
-        // Complete Button
         completeButton.setTitle("Complete", for: .normal)
         completeButton.backgroundColor = .gray
         completeButton.layer.cornerRadius = 10
@@ -54,7 +50,6 @@ class SetTableViewCell: UITableViewCell, UITableViewDataSource, UITableViewDeleg
         completeButton.addTarget(self, action: #selector(didCompleteSet), for: .touchUpInside)
         contentView.addSubview(completeButton)
 
-        // Constraints
         NSLayoutConstraint.activate([
             titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),

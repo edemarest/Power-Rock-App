@@ -1,13 +1,14 @@
 import UIKit
 
+/**
+ `ExerciseRowCell` custom table view cell for displaying an exercise with a checkbox, exercise name, and rep count.
+ */
 class ExerciseRowCell: UITableViewCell {
 
     // MARK: - UI Elements
-    private let checkbox = UIButton() // Checkbox on the left
-    private let exerciseLabel = UILabel() // Exercise name
-    private let repsLabel = UILabel() // Rep count
-
-    // Callback to notify about checkbox toggle
+    private let checkbox = UIButton()
+    private let exerciseLabel = UILabel()
+    private let repsLabel = UILabel()
     var onCheckboxToggle: ((Bool) -> Void)?
 
     // MARK: - Initialization
@@ -23,25 +24,21 @@ class ExerciseRowCell: UITableViewCell {
 
     // MARK: - Setup UI
     private func setupUI() {
-        // Checkbox
         checkbox.setImage(UIImage(systemName: "circle"), for: .normal)
         checkbox.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .selected)
         checkbox.addTarget(self, action: #selector(didTapCheckbox), for: .touchUpInside)
         checkbox.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(checkbox)
 
-        // Exercise Label
         exerciseLabel.font = UIFont.systemFont(ofSize: 16)
         exerciseLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(exerciseLabel)
 
-        // Reps Label
         repsLabel.font = UIFont.systemFont(ofSize: 14)
         repsLabel.textColor = .gray
         repsLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(repsLabel)
 
-        // Constraints
         NSLayoutConstraint.activate([
             checkbox.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             checkbox.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
@@ -55,7 +52,7 @@ class ExerciseRowCell: UITableViewCell {
             repsLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             repsLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
 
-            contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: 44) // Minimum height
+            contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
         ])
     }
 

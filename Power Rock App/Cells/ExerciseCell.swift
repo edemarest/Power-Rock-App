@@ -1,6 +1,7 @@
 import UIKit
-
-/// A custom view representing a single exercise with a name, reps, and a checkbox for completion.
+/**
+ `ExerciseCell` A custom view representing a single exercise with a name, reps, and a checkbox for completion.
+ */
 class ExerciseCell: UIView {
 
     // MARK: - Properties

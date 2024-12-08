@@ -62,7 +62,6 @@ class WelcomeViewController: UIViewController, WelcomeViewDelegate {
 
         let backgroundImageView = UIImageView(image: UIImage(named: "Welcome_Background"))
         backgroundImageView.contentMode = .scaleAspectFill
-        backgroundImageView.alpha = 0.6
         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
         view.insertSubview(backgroundImageView, aboveSubview: baseView)
 

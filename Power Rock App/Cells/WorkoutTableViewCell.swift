@@ -1,6 +1,8 @@
 import UIKit
 
-/// A custom table view cell for displaying workout details including title, band name, difficulty, and a cover image.
+/**
+ `WorkoutTableViewCell` custom table view cell for displaying workout details including title, band name, difficulty, and a cover image.
+ */
 class WorkoutTableViewCell: UITableViewCell {
 
     // MARK: - UI Elements
