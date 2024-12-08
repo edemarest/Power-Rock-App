@@ -6,13 +6,14 @@ import FirebaseFirestore
 /**
  `StarRegisterViewController` handles the registration of band accounts (Star users). Users can input their band name, email, password, genres, and members. A band logo can also be uploaded using the camera or gallery. On successful registration, user data is stored in Firestore, and the user is navigated to the Star Home screen.
  */
-class StarRegisterViewController: UIViewController, StarRegisterViewDelegate {
+class StarRegisterViewController: UIViewController, StarRegisterViewDelegate, PHPickerViewControllerDelegate {
 
     // MARK: - Properties
     var pickedImage: UIImage?
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
+        print("")
         super.viewDidLoad()
         self.title = "Register Your Band"
         setupNavbar()
@@ -162,19 +163,17 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate {
         photoPicker.delegate = self
         present(photoPicker, animated: true)
     }
-}
-
-// MARK: - PHPickerViewControllerDelegate
-extension StarRegisterViewController: PHPickerViewControllerDelegate {
+    
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
         dismiss(animated: true)
         guard let itemProvider = results.first?.itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self) else { return }
-
+        
         itemProvider.loadObject(ofClass: UIImage.self) { image, _ in
             if let image = image as? UIImage {
                 DispatchQueue.main.async {
-                    (self.view as? StarRegisterView)?.bandLogoImageView.image = image
-                    self.pickedImage = image
+                    if let starRegisterView = self.view.subviews.first(where: { $0 is StarRegisterView }) as? StarRegisterView {
+                        starRegisterView.bandLogoImageView.image = image
+                    }
                 }
             }
         }
@@ -391,14 +390,9 @@ class StarRegisterView: UIView {
 
     // MARK: - Actions Setup
     private func setupActions() {
-        uploadImageButton.addTarget(self, action: #selector(didTapUploadLogo), for: .touchUpInside)
         addMemberButton.addTarget(self, action: #selector(didTapAddMember), for: .touchUpInside)
         addGenreButton.addTarget(self, action: #selector(didTapAddGenre), for: .touchUpInside)
         registerButton.addTarget(self, action: #selector(didTapRegister), for: .touchUpInside)
-    }
-
-    @objc private func didTapUploadLogo() {
-        NotificationCenter.default.post(name: NSNotification.Name("UploadLogoTapped"), object: nil)
     }
 
     @objc private func didTapAddMember() {

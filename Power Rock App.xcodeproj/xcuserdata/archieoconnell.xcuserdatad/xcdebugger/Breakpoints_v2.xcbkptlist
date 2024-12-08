@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bucket
+   uuid = "CA451609-1448-4FDA-8335-7EA857244A2D"
+   type = "1"
+   version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "93628C19-6148-4AC9-A52E-98DC514AACA7"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Power Rock App/Views/StarRegisterView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "14"
+            endingLineNumber = "14"
+            landmarkName = "StarRegisterViewController"
+            landmarkType = "3">
+            <Locations>
+               <Location
+                  uuid = "93628C19-6148-4AC9-A52E-98DC514AACA7 - 6cc95a3cd4be9d69"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Power_Rock_App.StarRegisterViewController.__allocating_init(nibName: Swift.Optional&lt;Swift.String&gt;, bundle: Swift.Optional&lt;__C.NSBundle&gt;) -&gt; Power_Rock_App.StarRegisterViewController"
+                  moduleName = "Power Rock App.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/archieoconnell/Desktop/school/appdev_final/Power-Rock-App/Power%20Rock%20App/Views/StarRegisterView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "93628C19-6148-4AC9-A52E-98DC514AACA7 - 538bd0b15b9c94f4"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Power_Rock_App.StarRegisterViewController.init(nibName: Swift.Optional&lt;Swift.String&gt;, bundle: Swift.Optional&lt;__C.NSBundle&gt;) -&gt; Power_Rock_App.StarRegisterViewController"
+                  moduleName = "Power Rock App.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/archieoconnell/Desktop/school/appdev_final/Power-Rock-App/Power%20Rock%20App/Views/StarRegisterView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "14"
+                  endingLineNumber = "14">
+               </Location>
+               <Location
+                  uuid = "93628C19-6148-4AC9-A52E-98DC514AACA7 - 368e951affd22bf9"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Power_Rock_App.StarRegisterViewController.__allocating_init(coder: __C.NSCoder) -&gt; Swift.Optional&lt;Power_Rock_App.StarRegisterViewController&gt;"
+                  moduleName = "Power Rock App.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/archieoconnell/Desktop/school/appdev_final/Power-Rock-App/Power%20Rock%20App/Views/StarRegisterView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "93628C19-6148-4AC9-A52E-98DC514AACA7 - c3eaa8069fb38638"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Power_Rock_App.StarRegisterViewController.init(coder: __C.NSCoder) -&gt; Swift.Optional&lt;Power_Rock_App.StarRegisterViewController&gt;"
+                  moduleName = "Power Rock App.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/archieoconnell/Desktop/school/appdev_final/Power-Rock-App/Power%20Rock%20App/Views/StarRegisterView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "14"
+                  endingLineNumber = "14">
+               </Location>
+               <Location
+                  uuid = "93628C19-6148-4AC9-A52E-98DC514AACA7 - d2d6bc1e9764052e"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Power_Rock_App.StarRegisterViewController.__deallocating_deinit"
+                  moduleName = "Power Rock App.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/archieoconnell/Desktop/school/appdev_final/Power-Rock-App/Power%20Rock%20App/Views/StarRegisterView.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
+</Bucket>
