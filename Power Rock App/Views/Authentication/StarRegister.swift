@@ -2,6 +2,7 @@ import UIKit
 import PhotosUI
 import FirebaseAuth
 import FirebaseFirestore
+import FirebaseStorage
 
 /**
  `StarRegisterViewController` handles the registration of band accounts (Star users). Users can input their band name, email, password, genres, and members. A band logo can also be uploaded using the camera or gallery. On successful registration, user data is stored in Firestore, and the user is navigated to the Star Home screen.
@@ -107,26 +108,6 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate, PH
         }
     }
 
-    private func saveUserData(uid: String, bandName: String, email: String, genres: [String], members: [String], bandLogo: UIImage?) {
-        let userData: [String: Any] = [
-            "userType": "Star",
-            "bandName": bandName,
-            "email": email,
-            "genres": genres,
-            "members": members,
-            "bandLogoUrl": "default_band_logo_url" // Placeholder for now
-        ]
-
-        Firestore.firestore().collection("users").document(uid).setData(userData) { error in
-            if let error = error {
-                self.showAlert(title: "Error", message: "Failed to save user data. Please try again.")
-                return
-            }
-
-            self.navigateToStarHome()
-        }
-    }
-
     private func showAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
@@ -173,16 +154,106 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate, PH
                 DispatchQueue.main.async {
                     if let starRegisterView = self.view.subviews.first(where: { $0 is StarRegisterView }) as? StarRegisterView {
                         starRegisterView.bandLogoImageView.image = image
+                        self.pickedImage = image;
                     }
                 }
             }
         }
     }
+    
+    private func uploadBandLogo(_ bandLogo: UIImage, completion: @escaping (String?) -> Void) {
+        print("uploadBandLogo")
+        let storageRef = Storage.storage().reference().child("bandLogos/\(UUID().uuidString).jpg")
+        print("testing compression quality")
+        guard let imageData = bandLogo.jpegData(compressionQuality: 0.8) else {
+            completion(nil)
+            return
+        }
+        print("putting image in storage ref")
+        storageRef.putData(imageData, metadata: nil) { (metadata, error) in
+            if let error = error {
+                print("Error uploading image: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+            
+            print("downloading URL")
+            storageRef.downloadURL { url, error in
+                if let error = error {
+                    print("Error getting download URL: \(error.localizedDescription)")
+                    completion(nil)
+                } else {
+                    completion(url?.absoluteString)
+                }
+            }
+        }
+    }
+    
+    private func saveUserData(uid: String, bandName: String, email: String, genres: [String], members: [String], bandLogo: UIImage?) {
+        print("Saving user data")
+        print("bandLogoImage passed in: )")
+        print(bandLogo)
+
+        if let bandLogo = bandLogo {
+            // Upload the band logo to get its URL
+            uploadBandLogo(bandLogo) { [weak self] bandLogoUrl in
+                guard let self = self else { return }
+
+                // Check if the upload was successful
+                guard let bandLogoUrl = bandLogoUrl else {
+                    self.showAlert(title: "Error", message: "Failed to upload band logo. Please try again.")
+                    return
+                }
+
+                // Proceed with saving user data
+                let userData: [String: Any] = [
+                    "userType": "Star",
+                    "bandName": bandName,
+                    "email": email,
+                    "genres": genres,
+                    "members": members,
+                    "bandLogoUrl": bandLogoUrl
+                ]
+
+                Firestore.firestore().collection("users").document(uid).setData(userData) { error in
+                    if let error = error {
+                        print("Error saving user data: \(error.localizedDescription)")
+                        self.showAlert(title: "Error", message: "Failed to save user data. Please try again.")
+                        return
+                    }
+
+                    self.navigateToStarHome()
+                }
+            }
+        } else {
+            // No band logo provided; save user data without a logo URL
+            let userData: [String: Any] = [
+                "userType": "Star",
+                "bandName": bandName,
+                "email": email,
+                "genres": genres,
+                "members": members,
+                "bandLogoUrl": ""
+            ]
+
+            Firestore.firestore().collection("users").document(uid).setData(userData) { error in
+                if let error = error {
+                    print("Error saving user data: \(error.localizedDescription)")
+                    self.showAlert(title: "Error", message: "Failed to save user data. Please try again.")
+                    return
+                }
+
+                self.navigateToStarHome()
+            }
+        }
+    }
+
 }
 
 // MARK: - UIImagePickerControllerDelegate
 extension StarRegisterViewController: UINavigationControllerDelegate, UIImagePickerControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        print("imagePickerController")
         picker.dismiss(animated: true)
         if let image = info[.editedImage] as? UIImage {
             (view as? StarRegisterView)?.bandLogoImageView.image = image
