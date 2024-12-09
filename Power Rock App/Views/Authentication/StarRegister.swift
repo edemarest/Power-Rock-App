@@ -11,6 +11,7 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate, PH
 
     // MARK: - Properties
     var pickedImage: UIImage?
+    var pickedImageUrl: URL?
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -161,15 +162,24 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate, PH
         }
     }
     
-    private func uploadBandLogo(_ bandLogo: UIImage, completion: @escaping (String?) -> Void) {
-        print("uploadBandLogo")
-        let storageRef = Storage.storage().reference().child("bandLogos/\(UUID().uuidString).jpg")
-        print("testing compression quality")
-        guard let imageData = bandLogo.jpegData(compressionQuality: 0.8) else {
+    // TODO :
+    // below are current code and sakib's code.
+    // should try to combine them
+    
+    // current code
+    func uploadBandLogo(image: UIImage, completion: @escaping (String?) -> Void) {
+        // Generate a unique file name for the image
+        let uniqueFileName = "\(UUID().uuidString).jpg"
+        let storageRef = Storage.storage().reference().child("bandLogos/\(uniqueFileName)")
+        
+        // Convert the UIImage to JPEG data with compression quality
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            print("Error: Could not convert image to JPEG data.")
             completion(nil)
             return
         }
-        print("putting image in storage ref")
+        
+        // Upload the image data to Firebase Storage
         storageRef.putData(imageData, metadata: nil) { (metadata, error) in
             if let error = error {
                 print("Error uploading image: \(error.localizedDescription)")
@@ -177,14 +187,45 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate, PH
                 return
             }
             
-            print("downloading URL")
+            // Retrieve the download URL for the uploaded image
             storageRef.downloadURL { url, error in
                 if let error = error {
-                    print("Error getting download URL: \(error.localizedDescription)")
+                    print("Error fetching download URL: \(error.localizedDescription)")
                     completion(nil)
+                } else if let url = url {
+                    print("Successfully uploaded image. URL: \(url.absoluteString)")
+                    completion(url.absoluteString)
                 } else {
-                    completion(url?.absoluteString)
+                    print("Unexpected error: URL is nil.")
+                    completion(nil)
                 }
+            }
+        }
+    }
+    
+    
+    // sakib code
+    func uploadProfilePhotoToStorage(){
+        let storage = Storage.storage()
+        
+        //MARK: Upload the profile photo if there is any...
+        if let image = pickedImage{
+            if let jpegData = image.jpegData(compressionQuality: 80){
+                let storageRef = storage.reference()
+                let imagesRepo = storageRef.child("bandLogos")
+                let imageRef = imagesRepo.child("\(NSUUID().uuidString).jpg")
+                
+                let uploadTask = imageRef.putData(jpegData, completion: {(metadata, error) in
+                    if error == nil{
+                        imageRef.downloadURL(completion: {(url, error) in
+                            if error == nil{
+                                print("saved url")
+                                print(url)
+                                self.pickedImageUrl = url
+                            }
+                        })
+                    }
+                })
             }
         }
     }
@@ -196,7 +237,7 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate, PH
 
         if let bandLogo = bandLogo {
             // Upload the band logo to get its URL
-            uploadBandLogo(bandLogo) { [weak self] bandLogoUrl in
+            uploadBandLogo(image: bandLogo) { [weak self] bandLogoUrl in
                 guard let self = self else { return }
 
                 // Check if the upload was successful
