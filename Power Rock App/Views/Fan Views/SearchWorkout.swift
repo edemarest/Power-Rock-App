@@ -120,13 +120,14 @@ class SearchWorkoutViewController: UIViewController, UITableViewDataSource,
 
         searchBar.delegate = self
         searchBar.searchTextField.textColor = .white
-        searchBar.searchTextField.backgroundColor = .clear
+        searchBar.searchTextField.backgroundColor = UIColor.white.withAlphaComponent(0.25)
         searchBar.backgroundImage = UIImage()
         let placeholderAttributes: [NSAttributedString.Key: Any] = [
-            .foregroundColor: UIColor.white,
+            .foregroundColor: UIColor.lightGray,
             .font: UIFont.systemFont(ofSize: 14)
         ]
         searchBar.searchTextField.attributedPlaceholder = NSAttributedString(string: "Search workouts...", attributes: placeholderAttributes)
+
         view.addSubview(searchBar)
 
         difficultySlider.minimumTrackTintColor = UIColor(red: 1.0, green: 0.4, blue: 0.2, alpha: 1.0)

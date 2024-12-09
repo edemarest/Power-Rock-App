@@ -37,7 +37,7 @@ class WorkoutDetailsViewController: UIViewController, UITableViewDataSource, UIT
         let button = UIButton(type: .system)
         button.setTitle("Do Workout", for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor.systemOrange
+        button.backgroundColor = UIColor(red: 0.85, green: 0.35, blue: 0.15, alpha: 1.0)
         button.layer.cornerRadius = 10
         button.translatesAutoresizingMaskIntoConstraints = false
         button.isHidden = true
@@ -240,7 +240,7 @@ class WorkoutDetailsViewController: UIViewController, UITableViewDataSource, UIT
                     self.addToMyWorkoutsButton.backgroundColor = UIColor.darkGray
                 } else {
                     self.addToMyWorkoutsButton.setTitle("Add to My Workouts", for: .normal)
-                    self.addToMyWorkoutsButton.backgroundColor = UIColor.systemGreen
+                    self.addToMyWorkoutsButton.backgroundColor = UIColor(red: 0.1, green: 0.5, blue: 0.1, alpha: 1.0)
                 }
             }
         }
@@ -293,20 +293,60 @@ class WorkoutDetailsViewController: UIViewController, UITableViewDataSource, UIT
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return sets.count
     }
-
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "setCell", for: indexPath)
         let set = sets[indexPath.row]
-
-        cell.textLabel?.numberOfLines = 0
-        cell.textLabel?.text = formatSetDetails(set, index: indexPath.row + 1)
-
+        
+        // Create a container view for styling
+        let containerView = UIView()
+        containerView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        containerView.layer.cornerRadius = 12
+        containerView.clipsToBounds = true
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        cell.contentView.addSubview(containerView)
+        
+        // Add constraints for the container view
+        NSLayoutConstraint.activate([
+            containerView.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 5),
+            containerView.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -5),
+            containerView.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 10),
+            containerView.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -10)
+        ])
+        
+        // Create a label for the set details
+        let setDetailsLabel = UILabel()
+        setDetailsLabel.numberOfLines = 0
+        setDetailsLabel.textColor = .white
+        setDetailsLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Format the set details
+        let attributedText = NSMutableAttributedString(string: "Set \(indexPath.row + 1): ", attributes: [
+            .font: UIFont.boldSystemFont(ofSize: 18),
+            .foregroundColor:  UIColor(red: 0.85, green: 0.35, blue: 0.15, alpha: 1.0)
+        ])
+        for exercise in set.exercises {
+            let exerciseText = NSAttributedString(string: "\n• \(exercise.name) (x\(exercise.reps))", attributes: [
+                .font: UIFont.systemFont(ofSize: 16),
+                .foregroundColor: UIColor.white
+            ])
+            attributedText.append(exerciseText)
+        }
+        setDetailsLabel.attributedText = attributedText
+        
+        containerView.addSubview(setDetailsLabel)
+        
+        // Add constraints for the label
+        NSLayoutConstraint.activate([
+            setDetailsLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 10),
+            setDetailsLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -10),
+            setDetailsLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 10),
+            setDetailsLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -10)
+        ])
+        
         cell.backgroundColor = .clear
-        cell.textLabel?.textColor = .white
-        cell.textLabel?.font = UIFont.systemFont(ofSize: 16)
-        cell.layer.cornerRadius = 10
-        cell.clipsToBounds = true
         cell.selectionStyle = .none
+        
         return cell
     }
 
