@@ -230,64 +230,179 @@ class StarRegisterViewController: UIViewController, StarRegisterViewDelegate, PH
         }
     }
     
-    private func saveUserData(uid: String, bandName: String, email: String, genres: [String], members: [String], bandLogo: UIImage?) {
-        print("Saving user data")
-        print("bandLogoImage passed in: )")
-        print(bandLogo)
-
-        if let bandLogo = bandLogo {
-            // Upload the band logo to get its URL
-            uploadBandLogo(image: bandLogo) { [weak self] bandLogoUrl in
-                guard let self = self else { return }
-
-                // Check if the upload was successful
-                guard let bandLogoUrl = bandLogoUrl else {
-                    self.showAlert(title: "Error", message: "Failed to upload band logo. Please try again.")
+    func uploadProfilePhotoToStorage(image: UIImage, completion: @escaping (String?) -> Void) {
+        let storage = Storage.storage()
+        
+        // Ensure the image is valid
+        if let jpegData = image.jpegData(compressionQuality: 0.8) {
+            let storageRef = storage.reference()
+            let imagesRepo = storageRef.child("bandLogos")
+            let imageRef = imagesRepo.child("\(UUID().uuidString).jpg")
+            
+            // Upload the image
+            imageRef.putData(jpegData, metadata: nil) { (metadata, error) in
+                if let error = error {
+                    print("Error uploading image: \(error.localizedDescription)")
+                    completion(nil)
                     return
                 }
-
-                // Proceed with saving user data
-                let userData: [String: Any] = [
-                    "userType": "Star",
-                    "bandName": bandName,
-                    "email": email,
-                    "genres": genres,
-                    "members": members,
-                    "bandLogoUrl": bandLogoUrl
-                ]
-
-                Firestore.firestore().collection("users").document(uid).setData(userData) { error in
+                
+                // Get the download URL
+                imageRef.downloadURL { (url, error) in
                     if let error = error {
-                        print("Error saving user data: \(error.localizedDescription)")
-                        self.showAlert(title: "Error", message: "Failed to save user data. Please try again.")
-                        return
+                        print("Error retrieving download URL: \(error.localizedDescription)")
+                        completion(nil)
+                    } else if let url = url {
+                        print("Successfully uploaded image. URL: \(url.absoluteString)")
+                        completion(url.absoluteString)
+                    } else {
+                        completion(nil)
                     }
-
-                    self.navigateToStarHome()
                 }
             }
         } else {
-            // No band logo provided; save user data without a logo URL
+            print("Error: Unable to convert image to JPEG data.")
+            completion(nil)
+        }
+    }
+
+    
+//    private func saveUserData(uid: String, bandName: String, email: String, genres: [String], members: [String], bandLogo: UIImage?) {
+//        print("saving user data")
+//        print("bandLogoImage passed in: ")
+//        print(bandLogo)
+//        
+//        // set picked image url using uploadProfilePhotoToStorage here
+//        
+//        let userData: [String: Any] = [
+//            "userType": "Star",
+//            "bandName": bandName,
+//            "email": email,
+//            "genres": genres,
+//            "members": members,
+//            "bandLogoUrl": "placeholder", // put picked image url
+//        ]
+//
+//        Firestore.firestore().collection("users").document(uid).setData(userData) { error in
+//            if let error = error {
+//                self.showAlert(title: "Error", message: "Failed to save user data. Please try again.")
+//                return
+//            }
+//
+//            self.navigateToStarHome()
+//        }
+//    }
+    
+    private func saveUserData(uid: String, bandName: String, email: String, genres: [String], members: [String], bandLogo: UIImage?) {
+        print("Saving user data...")
+        
+        let dispatchGroup = DispatchGroup()
+        var uploadedImageUrl: String? = nil
+        
+        if let bandLogo = bandLogo {
+            // Enter the dispatch group before starting the upload
+            dispatchGroup.enter()
+            pickedImage = bandLogo // Assign the image to `pickedImage` for uploadProfilePhotoToStorage
+            uploadProfilePhotoToStorage()
+            
+            // Wait for the URL to be set
+            DispatchQueue.global().asyncAfter(deadline: .now() + 1) { // Poll for the value of `pickedImageUrl`
+                if let pickedImageUrl = self.pickedImageUrl?.absoluteString {
+                    uploadedImageUrl = pickedImageUrl
+                    print("Image URL obtained: \(pickedImageUrl)")
+                    dispatchGroup.leave()
+                } else {
+                    print("Failed to obtain image URLFailed to obtain image URL.")
+                    dispatchGroup.leave()
+                }
+            }
+        }
+        
+        // Wait for the upload to finish before saving user data
+        dispatchGroup.notify(queue: .main) {
             let userData: [String: Any] = [
                 "userType": "Star",
                 "bandName": bandName,
                 "email": email,
                 "genres": genres,
                 "members": members,
-                "bandLogoUrl": ""
+                "bandLogoUrl": uploadedImageUrl ?? "",
             ]
-
+            
             Firestore.firestore().collection("users").document(uid).setData(userData) { error in
                 if let error = error {
                     print("Error saving user data: \(error.localizedDescription)")
                     self.showAlert(title: "Error", message: "Failed to save user data. Please try again.")
                     return
                 }
-
+                
+                print("User data saved successfully.")
                 self.navigateToStarHome()
             }
         }
     }
+
+    
+//    private func saveUserData(uid: String, bandName: String, email: String, genres: [String], members: [String], bandLogo: UIImage?) {
+//        print("Saving user data...")
+//        
+//        if let bandLogo = bandLogo {
+//            // Upload the band logo and save the user data upon success
+//            uploadProfilePhotoToStorage(image: bandLogo) { [weak self] bandLogoUrl in
+//                guard let self = self else { return }
+//                
+//                if let bandLogoUrl = bandLogoUrl {
+//                    print("Band logo uploaded successfully. URL: \(bandLogoUrl)")
+//                    
+//                    let userData: [String: Any] = [
+//                        "userType": "Star",
+//                        "bandName": bandName,
+//                        "email": email,
+//                        "genres": genres,
+//                        "members": members,
+//                        "bandLogoUrl": bandLogoUrl,
+//                    ]
+//                    
+//                    // Save the user data to Firestore
+//                    Firestore.firestore().collection("users").document(uid).setData(userData) { error in
+//                        if let error = error {
+//                            print("Error saving user data: \(error.localizedDescription)")
+//                            self.showAlert(title: "Error", message: "Failed to save user data. Please try again.")
+//                            return
+//                        }
+//                        
+//                        print("User data saved successfully.")
+//                        self.navigateToStarHome()
+//                    }
+//                } else {
+//                    print("Failed to upload band logo. Cannot save user data.")
+//                    self.showAlert(title: "Error", message: "Failed to upload band logo. Please try again.")
+//                }
+//            }
+//        } else {
+//            // Save user data without a band logo if none is provided
+//            print("No band logo provided. Saving user data without logo...")
+//            let userData: [String: Any] = [
+//                "userType": "Star",
+//                "bandName": bandName,
+//                "email": email,
+//                "genres": genres,
+//                "members": members,
+//                "bandLogoUrl": "",
+//            ]
+//            
+//            Firestore.firestore().collection("users").document(uid).setData(userData) { error in
+//                if let error = error {
+//                    print("Error saving user data: \(error.localizedDescription)")
+//                    self.showAlert(title: "Error", message: "Failed to save user data. Please try again.")
+//                    return
+//                }
+//                
+//                print("User data saved successfully without band logo.")
+//                self.navigateToStarHome()
+//            }
+//        }
+//    }
 
 }
 
